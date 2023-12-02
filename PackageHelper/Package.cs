@@ -1,4 +1,4 @@
-﻿namespace Server
+﻿namespace PackageHelper
 {
     public static class Package
     {
