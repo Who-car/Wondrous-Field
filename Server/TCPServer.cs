@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using PackageHelper;
 
 namespace Server
 {
@@ -21,6 +22,11 @@ namespace Server
                 Console.WriteLine("...Сервер запущен...");
                 do
                 {
+                    var clientSocket = await _listener.AcceptAsync();
+
+                    _ = Task.Run(
+                        async() => 
+                            await ProcessClientSocketAsync(clientSocket));
 
                 } while (true);
             }
@@ -31,7 +37,32 @@ namespace Server
             finally
             {
                 _listener.Close();
+                Console.WriteLine("...Сервер завершил работу...");
             }
         }
+
+        async Task ProcessClientSocketAsync(Socket socket)
+        {
+            try
+            {
+                var buffer = new byte[Package.MaxPackageSize];
+                var contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+
+                if (PackageChecker.IsQueryValid(buffer, contentLength))
+                {
+                    
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            catch
+            {
+                await socket.DisconnectAsync(false);
+            }
+        }
+
+        //TODO: Broadcast
     }
 }

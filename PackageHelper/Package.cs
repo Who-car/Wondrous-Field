@@ -2,9 +2,9 @@
 {
     public static class Package
     {
-        public const int MaxPacketSize = 256;
+        public const int MaxPackageSize = 256;
         public const int MaxContentSize = 240;
-        public const int MaxFreeBytes = MaxPacketSize - MaxContentSize;
+        public const int MaxFreeBytes = MaxPackageSize - MaxContentSize;
 
         public const byte Separator = 0x2F;
         public const byte End = 0x0;
