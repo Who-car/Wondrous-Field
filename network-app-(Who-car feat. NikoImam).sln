@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerApp", "ServerApp\Serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageHelper", "PackageHelper\PackageHelper.csproj", "{D2461685-042C-4BED-BDCF-7BD8AC59AB93}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBController", "DBController\DBController.csproj", "{C7492E65-FFCC-4F1B-9732-78A8C82238DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{D2461685-042C-4BED-BDCF-7BD8AC59AB93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2461685-042C-4BED-BDCF-7BD8AC59AB93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2461685-042C-4BED-BDCF-7BD8AC59AB93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7492E65-FFCC-4F1B-9732-78A8C82238DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7492E65-FFCC-4F1B-9732-78A8C82238DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7492E65-FFCC-4F1B-9732-78A8C82238DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7492E65-FFCC-4F1B-9732-78A8C82238DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
