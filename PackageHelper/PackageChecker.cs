@@ -6,5 +6,30 @@
         {
             return default;
         }
+
+        public static bool IsSignUp(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsSignIn(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsJoin(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsBye(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsSay(byte[] buffer)
+        {
+            return default;
+        }
     }
 }

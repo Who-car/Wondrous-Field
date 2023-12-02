@@ -12,6 +12,8 @@
         public const int Fullness = 11;
         public const int Query = 12;
 
+        //Protocol: #ANTP/****/**/..................'\0'
+
         public static readonly byte[] BasePackage =
         {
             0x2, 0x2, 0x41, 0x4E, 0x50, Separator
@@ -21,12 +23,7 @@
         {
             return default!;
         }
-
-        public static bool IsValidQuery(byte[] buffer, int packageLength)
-        {
-            return default;
-        }
-
+        
         public static byte[] CreatePackage(byte[] content)
         {
             return default!;

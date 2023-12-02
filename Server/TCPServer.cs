@@ -50,7 +50,26 @@ namespace Server
 
                 if (PackageChecker.IsQueryValid(buffer, contentLength))
                 {
-                    
+                    if (PackageChecker.IsSignUp(buffer))
+                    {
+
+                    }
+                    else if (PackageChecker.IsSignIn(buffer))
+                    {
+
+                    }
+                    else if (PackageChecker.IsJoin(buffer))
+                    {
+                        //TODO: Реализовать создание игровой сессии с броадкастом
+                    }
+                    else if (PackageChecker.IsSay(buffer))
+                    {
+
+                    }
+                    else if (PackageChecker.IsBye(buffer))
+                    {
+
+                    }
                 }
                 else
                 {
