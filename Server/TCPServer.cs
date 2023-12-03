@@ -6,12 +6,15 @@ namespace Server
 {
     public class TCPServer
     {
+        Dictionary<string, List<string>> _sessions;
+
         readonly Socket _listener;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(new IPEndPoint(ipAddress, port));
+            _sessions = new();
         }
 
         public async Task RunServerAsync()
