@@ -7,6 +7,11 @@
             return default;
         }
 
+        public static bool IsHello(byte[] buffer)
+        {
+            return default;
+        }
+
         public static bool IsSignUp(byte[] buffer)
         {
             return default;
@@ -28,6 +33,16 @@
         }
 
         public static bool IsSay(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsPartial(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsFull(byte[] buffer)
         {
             return default;
         }

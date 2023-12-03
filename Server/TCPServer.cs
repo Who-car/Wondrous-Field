@@ -1,12 +1,18 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using PackageHelper;
+using DatabaseController;
+using System.Text;
 
 namespace Server
 {
     public class TCPServer
     {
         Dictionary<string, List<string>> _sessions;
+        static Semaphore gamesSem = new Semaphore(3, 3);
+        Dictionary<Socket, string> _players;
+        readonly Dictionary<Socket, string> _clients;
+        DBController _db;
 
         readonly Socket _listener;
 
@@ -15,6 +21,9 @@ namespace Server
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(new IPEndPoint(ipAddress, port));
             _sessions = new();
+            _players = new();
+            _clients = new();
+            _db = new("");
         }
 
         public async Task RunServerAsync()
@@ -26,6 +35,8 @@ namespace Server
                 do
                 {
                     var clientSocket = await _listener.AcceptAsync();
+
+                    //_clients.Add(clientSocket, null!);
 
                     _ = Task.Run(
                         async() => 
@@ -55,23 +66,53 @@ namespace Server
                 {
                     if (PackageChecker.IsSignUp(buffer))
                     {
+                        var content = new List<byte>();
+                        content.AddRange(Package.GetContent(buffer, contentLength));
+
+                        if (PackageChecker.IsPartial(buffer))
+                        {
+                            while (socket.Connected)
+                            {
+                                contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+                                if (!PackageChecker.IsPartial(buffer))
+                                {
+                                    content.AddRange(Package.GetContent(buffer, contentLength));
+                                    break;
+                                }
+                                content.AddRange(Package.GetContent(buffer, contentLength));
+                            }
+                        }
+
+                        var message = await _db.AddUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
 
                     }
                     else if (PackageChecker.IsSignIn(buffer))
                     {
+                        var content = new List<byte>();
+                        content.AddRange(Package.GetContent(buffer, contentLength));
 
+                        if (PackageChecker.IsPartial(buffer))
+                        {
+                            while (socket.Connected)
+                            {
+                                contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+                                if (!PackageChecker.IsPartial(buffer))
+                                {
+                                    content.AddRange(Package.GetContent(buffer, contentLength));
+                                    break;
+                                }
+                                content.AddRange(Package.GetContent(buffer, contentLength));
+                            }
+                        }
+
+                        var message = await _db.CheckUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
                     }
                     else if (PackageChecker.IsJoin(buffer))
                     {
-                        //TODO: Реализовать создание игровой сессии с броадкастом
-                    }
-                    else if (PackageChecker.IsSay(buffer))
-                    {
+                        while (socket.Connected)
+                        {
 
-                    }
-                    else if (PackageChecker.IsBye(buffer))
-                    {
-
+                        }
                     }
                 }
                 else
@@ -81,6 +122,11 @@ namespace Server
             }
             catch
             {
+                //TODO: Exception
+            }
+            finally
+            {
+                _clients.Remove(socket);
                 await socket.DisconnectAsync(false);
             }
         }
