@@ -13,6 +13,7 @@ namespace Server
         Dictionary<Socket, string> _players;
         readonly Dictionary<Socket, string> _clients;
         DBController _db;
+        Distributor _distributor;
 
         readonly Socket _listener;
 
@@ -24,6 +25,7 @@ namespace Server
             _players = new();
             _clients = new();
             _db = new("");
+            _distributor = new();
         }
 
         public async Task RunServerAsync()
@@ -107,10 +109,15 @@ namespace Server
 
                         var message = await _db.CheckUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
                     }
-                    else if (PackageChecker.IsJoin(buffer))
+                    else
                     {
-                        while (socket.Connected)
+
+                        while(socket.Connected)
                         {
+                            if (PackageChecker.IsJoin(buffer))
+                            {
+
+                            }
 
                         }
                     }
@@ -131,6 +138,10 @@ namespace Server
             }
         }
 
+        async Task ProcessSessionAsync(Socket socket)
+        {
+
+        }
         //TODO: Broadcast
     }
 }
