@@ -1,0 +1,39 @@
+﻿<Window x:Class="ClientFrontend.Views.JoinGameView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:ClientFrontend.Views"
+        mc:Ignorable="d"
+        Title="JoinGameView" Height="830" Width="1280">
+    <Grid
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <TextBlock 
+            Grid.Row="0"
+            Style="{StaticResource Header}">
+            ПРИСОЕДИНИТЬСЯ
+        </TextBlock>
+        <TextBlock 
+            Grid.Row="1"
+            Style="{StaticResource PlainText}">
+            введите код игры
+        </TextBlock>
+        <StackPanel 
+            Grid.Row="2"
+            Orientation="Horizontal"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+            <Border Style="{StaticResource EmptyCell}"/>
+            <Border Style="{StaticResource EmptyCell}"/>
+            <Border Style="{StaticResource EmptyCell}"/>
+            <Border Style="{StaticResource EmptyCell}"/>
+            <Border Style="{StaticResource EmptyCell}"/>
+        </StackPanel>
+    </Grid>
+</Window>
