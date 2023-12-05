@@ -51,7 +51,7 @@
                 открыть слово
             </Button>
         </Grid>
-        <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0"/>
+        <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0" Visibility="Collapsed"/>
         <Button 
             x:Name="ChatButton"
             Style="{StaticResource ChatButton}"
@@ -78,7 +78,12 @@
                                      To="0" Duration="0:0:0.3"/>
                     <DoubleAnimation Storyboard.TargetName="Overlay"
                                      Storyboard.TargetProperty="Opacity"
-                                     From="0.5" To="0.0" Duration="0:0:0.3"/>
+                                     To="0.0" Duration="0:0:0.3"/>
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Overlay"
+                                                   Storyboard.TargetProperty="Visibility"
+                                                   Duration="0:0:0.3">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0.3" Value="{x:Static Visibility.Collapsed}"/>
+                    </ObjectAnimationUsingKeyFrames>
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
@@ -88,6 +93,11 @@
                     <DoubleAnimation Storyboard.TargetName="ChatPanel"
                                      Storyboard.TargetProperty="Width"
                                      To="450" Duration="0:0:0.3"/>
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Overlay"
+                                                   Storyboard.TargetProperty="Visibility"
+                                                   Duration="0:0:0">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0.0" Value="{x:Static Visibility.Visible}"/>
+                    </ObjectAnimationUsingKeyFrames>
                     <DoubleAnimation Storyboard.TargetName="Overlay"
                                      Storyboard.TargetProperty="Opacity"
                                      From="0.0" To="0.5" Duration="0:0:0.3"/>
