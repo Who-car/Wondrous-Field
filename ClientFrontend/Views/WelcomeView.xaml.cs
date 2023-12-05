@@ -1,23 +1,25 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
+using System.Windows.Controls;
 
-namespace ClientFrontend
+namespace ClientFrontend.Views
 {
-    public partial class WelcomeView : Window
+    public partial class WelcomeView : Page
     {
-        public WelcomeView()
+        private readonly Frame _mainFrame;
+        public WelcomeView(Frame mainFrame)
         {
+            _mainFrame = mainFrame;
             InitializeComponent();
         }
 
         private void StartGame(object sender, RoutedEventArgs e)
         {
-            Console.WriteLine("Someone wants to start new game!");
+            _mainFrame.Navigate(new CreateGameView(_mainFrame));
         }
 
         private void JoinGame(object sender, RoutedEventArgs e)
         {
-            Console.WriteLine("Someone wants to join game!");
+            _mainFrame.Navigate(new JoinGameView(_mainFrame));
         }
     }
 }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace ClientFrontend.Views;
 
-public partial class VictoryView : Window
+public partial class VictoryView : Page
 {
     public VictoryView()
     {

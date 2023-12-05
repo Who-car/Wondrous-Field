@@ -1,4 +1,4 @@
-﻿<Window x:Class="ClientFrontend.Views.GameView"
+﻿<Page x:Class="ClientFrontend.Views.GameView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -69,7 +69,7 @@
             </TextBlock>
         </DockPanel>
     </Grid>
-    <Window.Triggers>
+    <Page.Triggers>
         <EventTrigger RoutedEvent="MouseDown">
             <BeginStoryboard>
                 <Storyboard>
@@ -104,5 +104,5 @@
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
-    </Window.Triggers>
-</Window>
+    </Page.Triggers>
+</Page>
