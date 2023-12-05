@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace ClientFrontend.Views;
 
-public partial class GameView : Window
+public partial class GameView : Page
 {
     public GameView()
     {

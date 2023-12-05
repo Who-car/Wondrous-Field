@@ -1,4 +1,4 @@
-﻿<Window x:Class="ClientFrontend.WelcomeView"
+﻿<Page x:Class="ClientFrontend.Views.WelcomeView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -32,4 +32,4 @@
             присоединиться к игре
         </Button>
     </Grid>
-</Window>
+</Page>
