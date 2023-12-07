@@ -19,9 +19,9 @@
             0x23, 0x41, 0x4E, 0x50, Separator
         };
 
-        public static byte[] GetContent(byte[] package, int contentLength)
+        public static byte[] GetContent(byte[] package, int packageLength)
         {
-            return package.Take(new Range(BodyStartIndex, contentLength - 2)).ToArray();
+            return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
         }
         
         public static byte[] CreatePackage(byte[] content)
@@ -39,17 +39,7 @@
             return default;
         }
 
-        public static bool IsHello(byte[] buffer)
-        {
-            return default;
-        }
-
-        public static bool IsSignUp(byte[] buffer)
-        {
-            return default;
-        }
-
-        public static bool IsSignIn(byte[] buffer)
+        public static bool IsCreateSession(byte[] buffer)
         {
             return default;
         }
@@ -59,12 +49,27 @@
             return default;
         }
 
-        public static bool IsBye(byte[] buffer)
+        public static bool IsSayLetter(byte[] buffer)
         {
             return default;
         }
 
-        public static bool IsSay(byte[] buffer)
+        public static bool IsSayWord(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsPost(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsMessage(byte[] buffer)
+        {
+            return default;
+        }
+
+        public static bool IsBye(byte[] buffer)
         {
             return default;
         }
