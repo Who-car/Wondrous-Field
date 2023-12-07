@@ -5,7 +5,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:ClientFrontend.Views"
         mc:Ignorable="d"
-        Title="JoinGameView" Height="830" Width="1280">
+        Title="JoinGameView" Height="830" Width="1280"
+        Loaded="PageLoaded">
     <Grid>
         <Button 
             x:Name="ChatButton"
@@ -16,9 +17,9 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center">
             <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
-                <RowDefinition/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="250"/>
             </Grid.RowDefinitions>
             <TextBlock 
                 Grid.Row="0"
@@ -30,17 +31,25 @@
                 Style="{StaticResource PlainText}">
                 введите код игры
             </TextBlock>
-            <StackPanel 
-                Grid.Row="2"
-                Orientation="Horizontal"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-            </StackPanel>
+            <ItemsControl Grid.Row="2" x:Name="CharactersControl"
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding SecretCode}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBox x:Name="TextBox"
+                                 Style="{StaticResource EmptyCell}" 
+                                 Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewTextInput="TextBox_PreviewTextInput"
+                                 TextChanged="TextBox_TextChanged"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </Grid>
 </Page>

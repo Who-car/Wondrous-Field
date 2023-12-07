@@ -30,27 +30,23 @@
                 Style="{StaticResource PlainText}">
                 сообщите участникам данный код
             </TextBlock>
-            <StackPanel 
-                Grid.Row="2"
-                Orientation="Horizontal"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <Border Style="{StaticResource FilledCell}">
-                    <TextBlock Style="{StaticResource CellContent}">A</TextBlock>
-                </Border>
-                <Border Style="{StaticResource FilledCell}">
-                    <TextBlock Style="{StaticResource CellContent}">B</TextBlock>
-                </Border>
-                <Border Style="{StaticResource FilledCell}">
-                    <TextBlock Style="{StaticResource CellContent}">C</TextBlock>
-                </Border>
-                <Border Style="{StaticResource FilledCell}">
-                    <TextBlock Style="{StaticResource CellContent}">D</TextBlock>
-                </Border>
-                <Border Style="{StaticResource FilledCell}">
-                    <TextBlock Style="{StaticResource CellContent}">1</TextBlock>
-                </Border>
-            </StackPanel>
+            <ItemsControl Grid.Row="2" x:Name="CharactersControl" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource FilledCell}">
+                            <TextBlock Style="{StaticResource CellContent}" Text="{Binding}"/>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
         </Grid>
     </Grid>
 </Page>
