@@ -4,15 +4,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:ClientFrontend.Views"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
         mc:Ignorable="d"
         Title="GameView" Height="830" Width="1280">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
     <Grid>
         <Grid
             HorizontalAlignment="Center"
             VerticalAlignment="Center">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="250"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -22,34 +26,55 @@
                 Style="{StaticResource PlainText}">
                 Лучшее создание на Земле это:
             </TextBlock>
-            <StackPanel 
-                Grid.Row="1"
-                Orientation="Horizontal"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-                <Border Style="{StaticResource EmptyCell}"/>
-            </StackPanel>
+            <ItemsControl Grid.Row="1" x:Name="CharactersControl"
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding WordLetters}"
+                          ItemTemplateSelector="{StaticResource CellTemplateSelector}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
             <TextBlock 
                 Grid.Row="2"
-                Style="{StaticResource PlainText}">
+                Style="{StaticResource PlainText}"
+                Visibility="{Binding IsTurn, Converter={StaticResource BooleanToVisibilityConverter}}">
                 Ваш ход
+            </TextBlock>
+            <TextBlock 
+                Grid.Row="2"
+                Style="{StaticResource PlainText}"
+                Visibility="{Binding IsTurn, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Ход кого-то...
             </TextBlock>
             <Button 
                 Grid.Row="3" 
                 Style="{DynamicResource RoundButton}"
+                Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Click="OpenLetter">
                 открыть букву
             </Button>
+            <TextBlock 
+                Grid.Row="3"
+                Style="{StaticResource PlainText}"
+                Visibility="{Binding LetterChosen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Выберите букву
+            </TextBlock>
             <Button 
                 Grid.Row="4" 
                 Style="{DynamicResource RoundButton}"
+                Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Click="OpenWord">
                 открыть слово
             </Button>
+            <TextBlock 
+                Grid.Row="3"
+                Style="{StaticResource PlainText}"
+                Visibility="{Binding WordChosen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Введите слово
+            </TextBlock>
         </Grid>
         <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0" Visibility="Collapsed"/>
         <Button 
