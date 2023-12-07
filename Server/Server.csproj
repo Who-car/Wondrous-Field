@@ -7,7 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DBController\DBController.csproj" />
     <ProjectReference Include="..\PackageHelper\PackageHelper.csproj" />
   </ItemGroup>
 
