@@ -7,10 +7,13 @@
         public const int MaxBodySize = MaxPackageSize - ReservedSize;
 
         public const byte Separator = 0x2F;
-        public const byte End = 0x0;
+        public const byte EndByte = 0x0;
+
         public const int Fullness = 11;
         public const int Query = 12;
         public const int BodyStartIndex = ReservedSize;
+        public const int CommandStart = 6;
+        public const int CommandEnd = CommandStart + 3;
 
         //Protocol: #ANTP/****/**/...[END]
 
