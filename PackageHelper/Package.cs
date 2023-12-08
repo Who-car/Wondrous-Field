@@ -1,4 +1,6 @@
-﻿namespace PackageHelper
+﻿using System.Security;
+
+namespace PackageHelper
 {
     public static class Package
     {
@@ -27,14 +29,44 @@
             return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
         }
         
-        public static byte[] CreatePackage(byte[] content)
+        public static byte[] CreatePackage(byte[] content, byte[] command, PackageFullness fullness, QueryType query)
         {
-            return default!;
+            return new PackageBuilder(content.Length)
+                .SetCommand(command)
+                .SetFullness(fullness)
+                .SetQueryType(query)
+                .SetContent(content)
+                .Build();
         }
 
-        public static List<byte[]> DivideIntoPackages()
+        public static List<byte[]> GetPackages(byte[] content, byte[] command, QueryType query)
         {
-            return default!;
+            var packages = new List<byte[]>();
+
+            if (content.Length > MaxBodySize)
+            {
+                var chunks = content.Chunk(MaxBodySize).ToList();
+                var chunksCount = chunks.Count;
+
+                for(var i = 0; i < chunksCount; i++)
+                {
+                    if (i == chunksCount - 1)
+                    {
+                        packages.Add(CreatePackage(content, command, PackageFullness.Full, query));
+                        break;
+                    }
+                    else
+                    {
+                        packages.Add(CreatePackage(content, command, PackageFullness.Partial, query));
+                    }
+                }
+            }
+            else
+            {
+                packages.Add(CreatePackage(content, command, PackageFullness.Full, query));
+            }
+
+            return packages;
         }
 
         public static bool IsQueryValid(byte[] buffer, int contentLength)
