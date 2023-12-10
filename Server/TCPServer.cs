@@ -53,20 +53,27 @@ namespace Server
             {
                 var query = await GetFullContent(socket);
 
-                while(socket.Connected)
+                if (query.Command.Equals(Command.CreateSession))
                 {
-                    if (query.Command.Equals(Command.CreateSession))
-                    {
-                        CreateSession(Encoding.UTF8.GetString(query.Body), socket);
-                    }
-                    else if ()
+                    CreateSession(Encoding.UTF8.GetString(query.Body), socket);
+
+                    while(socket.Connected)
                     {
 
                     }
-                    else
+                }
+                else if (query.Command.Equals(Command.Join))
+                {
+                    JoinToSession(Encoding.UTF8.GetString(query.Body), socket, "");
+
+                    while(socket.Connected)
                     {
-                        throw new Exception();
+
                     }
+                }
+                else
+                {
+                    throw new Exception();
                 }
             }
             catch
@@ -84,7 +91,19 @@ namespace Server
                 session.AddPlayer(name, player);
                 _sessions.Add(session.SessionId, session);
 
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
+        bool JoinToSession(string name, Socket player, string sessionId)
+        {
+            try
+            {
+                _sessions[sessionId].AddPlayer(name, player);
 
                 return true;
             }
@@ -94,7 +113,7 @@ namespace Server
             }
         }
 
-        async Task<Query> GetFullContent(Socket socket)
+            async Task<Query> GetFullContent(Socket socket)
         {
             var content = new List<byte>();
             var buffer = new byte[Package.MaxPackageSize];

@@ -6,7 +6,7 @@ namespace Server
     {
         public string SessionId { get; init; }
 
-        readonly Dictionary<string, Socket> _players = new(3);
+        readonly Dictionary<Socket, string> _players = new(3);
         int _playersCount = 0;
 
         public char[] Word { get; init; }
@@ -24,7 +24,7 @@ namespace Server
                 throw new Exception();
             }
 
-            _players[name] = player;
+            _players[player] = name;
             _playersCount++;
         }
     }
