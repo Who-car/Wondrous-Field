@@ -1,31 +1,20 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using PackageHelper;
-using DatabaseController;
-using System.Text;
 
 namespace Server
 {
     public class TCPServer
     {
-        Dictionary<string, List<string>> _sessions;
-        static Semaphore gamesSem = new Semaphore(3, 3);
-        Dictionary<Socket, string> _players;
-        readonly Dictionary<Socket, string> _clients;
-        DBController _db;
-        Distributor _distributor;
 
         readonly Socket _listener;
+        readonly Dictionary<string, Session> _sessions;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(new IPEndPoint(ipAddress, port));
             _sessions = new();
-            _players = new();
-            _clients = new();
-            _db = new("");
-            _distributor = new();
         }
 
         public async Task RunServerAsync()
@@ -62,64 +51,18 @@ namespace Server
             try
             {
                 var buffer = new byte[Package.MaxPackageSize];
-                var contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+                var packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
 
-                if (PackageChecker.IsQueryValid(buffer, contentLength))
+                if (Package.IsPackageValid(buffer, packageLength))
                 {
-                    if (PackageChecker.IsSignUp(buffer))
+                    if (Package.IsCreateSession(buffer))
                     {
-                        var content = new List<byte>();
-                        content.AddRange(Package.GetContent(buffer, contentLength));
 
-                        if (PackageChecker.IsPartial(buffer))
-                        {
-                            while (socket.Connected)
-                            {
-                                contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-                                if (!PackageChecker.IsPartial(buffer))
-                                {
-                                    content.AddRange(Package.GetContent(buffer, contentLength));
-                                    break;
-                                }
-                                content.AddRange(Package.GetContent(buffer, contentLength));
-                            }
-                        }
-
-                        var message = await _db.AddUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
-
+                        CreateSession("", socket);
                     }
-                    else if (PackageChecker.IsSignIn(buffer))
-                    {
-                        var content = new List<byte>();
-                        content.AddRange(Package.GetContent(buffer, contentLength));
-
-                        if (PackageChecker.IsPartial(buffer))
-                        {
-                            while (socket.Connected)
-                            {
-                                contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-                                if (!PackageChecker.IsPartial(buffer))
-                                {
-                                    content.AddRange(Package.GetContent(buffer, contentLength));
-                                    break;
-                                }
-                                content.AddRange(Package.GetContent(buffer, contentLength));
-                            }
-                        }
-
-                        var message = await _db.CheckUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
-                    }
-                    else
+                    else if (Package.IsJoin(buffer))
                     {
 
-                        while(socket.Connected)
-                        {
-                            if (PackageChecker.IsJoin(buffer))
-                            {
-
-                            }
-
-                        }
                     }
                 }
                 else
@@ -130,18 +73,33 @@ namespace Server
             catch
             {
                 //TODO: Exception
-            }
-            finally
-            {
-                _clients.Remove(socket);
                 await socket.DisconnectAsync(false);
             }
         }
 
-        async Task ProcessSessionAsync(Socket socket)
+        bool CreateSession(string name, Socket player)
         {
+            try
+            {
+                Session session = new();
+                session.AddPlayer(name, player);
 
+                _sessions.Add(session.SessionId, session);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
-        //TODO: Broadcast
+
+        async Task<List<byte>> GetFullContent(Socket socket)
+        {
+            var content = new List<byte>();
+            while (socket.Connected)
+            {
+                
+            }
+        }
     }
 }

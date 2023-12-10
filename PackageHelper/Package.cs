@@ -52,15 +52,12 @@ namespace PackageHelper
 
                 for (var i = 0; i < chunksCount; i++)
                 {
+                    var fullness = PackageFullness.Partial;
                     if (i == chunksCount - 1)
                     {
-                        packages.Add(CreatePackage(content, command, PackageFullness.Full, query));
-                        break;
+                        fullness = PackageFullness.Full;
                     }
-                    else
-                    {
-                        packages.Add(CreatePackage(content, command, PackageFullness.Partial, query));
-                    }
+                    packages.Add(CreatePackage(content, command, fullness, query));
                 }
             }
             else
