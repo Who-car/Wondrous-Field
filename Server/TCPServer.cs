@@ -50,17 +50,15 @@ namespace Server
         {
             try
             {
-                var buffer = new byte[Package.MaxPackageSize];
-                var packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
 
-                if (Package.IsPackageValid(buffer, packageLength))
+                if ()
                 {
-                    if (Package.IsCreateSession(buffer))
+                    if ()
                     {
 
                         CreateSession("", socket);
                     }
-                    else if (Package.IsJoin(buffer))
+                    else if ()
                     {
 
                     }
@@ -96,10 +94,20 @@ namespace Server
         async Task<List<byte>> GetFullContent(Socket socket)
         {
             var content = new List<byte>();
+            var buffer = new byte[Package.MaxPackageSize];
+            var packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+
             while (socket.Connected)
             {
-                
+                content.AddRange(Package.GetContent(buffer, packageLength));
+
+                if(Package.IsPartial(buffer))
+                {
+                    continue;
+                }
             }
+
+            return content;
         }
     }
 }
