@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Text;
 using PackageHelper;
+using ClientServerTransfer;
 
 namespace Server
 {
@@ -9,13 +10,15 @@ namespace Server
     {
 
         readonly Socket _listener;
-        readonly Dictionary<string, Session> _sessions;
+        readonly Dictionary<string, Session> _privateSessions;
+        readonly Dictionary<string, Session> _freeSessions;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(new IPEndPoint(ipAddress, port));
-            _sessions = new();
+            _privateSessions = new();
+            _freeSessions = new();
         }
 
         public async Task RunServerAsync()
@@ -51,11 +54,11 @@ namespace Server
         {
             try
             {
-                var query = await GetFullContent(socket);
+                var query = await Package.GetFullContent(socket);
 
-                if (query.Command.Equals(Command.CreateSession))
+                if (query.Command!.Equals(Command.CreateSession))
                 {
-                    CreateSession(Encoding.UTF8.GetString(query.Body), socket);
+                    await CreateSession(Encoding.UTF8.GetString(query.Body!), socket);
 
                     while(socket.Connected)
                     {
@@ -64,7 +67,7 @@ namespace Server
                 }
                 else if (query.Command.Equals(Command.Join))
                 {
-                    JoinToSession(Encoding.UTF8.GetString(query.Body), socket, "");
+                    await JoinToSession(Encoding.UTF8.GetString(query.Body!), socket, "");
 
                     while(socket.Connected)
                     {
@@ -83,13 +86,14 @@ namespace Server
             }
         }
 
-        bool CreateSession(string name, Socket player)
+        async Task<bool> CreateSession(string name, Socket player)
         {
             try
             {
                 Session session = new();
                 session.AddPlayer(name, player);
-                _sessions.Add(session.SessionId, session);
+                _privateSessions.Add(session.SessionId, session);
+                await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfullJoin = true }));
 
                 return true;
             }
@@ -99,11 +103,22 @@ namespace Server
             }
         }
 
-        bool JoinToSession(string name, Socket player, string sessionId)
+        async Task<bool> JoinToSession(string name, Socket player, string sessionId)
         {
             try
             {
-                _sessions[sessionId].AddPlayer(name, player);
+                if(sessionId != null)
+                {
+                    if (_privateSessions.ContainsKey(sessionId))
+                    {
+                        _privateSessions[sessionId].AddPlayer(name, player);
+                        await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfullJoin = true }));
+                    }
+                }
+                else
+                {
+
+                }
 
                 return true;
             }
@@ -113,30 +128,14 @@ namespace Server
             }
         }
 
-            async Task<Query> GetFullContent(Socket socket)
+        async Task SendResponseToUser(Socket socket, byte[] content)
         {
-            var content = new List<byte>();
-            var buffer = new byte[Package.MaxPackageSize];
-            int packageLength;
-            byte[] command = new byte[4];
+            var packages = Package.GetPackages(content, Command.Post, QueryType.Response);
 
-            while (socket.Connected)
+            foreach(var package in packages)
             {
-                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-
-                if (!Package.IsPackageValid(buffer, packageLength)) throw new Exception();
-
-                command = Package.GetCommand(buffer);
-                content.AddRange(Package.GetContent(buffer, packageLength));
-
-                if(Package.IsPartial(buffer))
-                {
-                    continue;
-                }
-                break;
+                await socket.SendAsync(package, SocketFlags.None);
             }
-
-            return new Query { Body = content.ToArray(), Command = command };
         }
     }
 }

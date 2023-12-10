@@ -1,4 +1,4 @@
-﻿using System.Security;
+﻿using System.Net.Sockets;
 
 namespace PackageHelper
 {
@@ -29,6 +29,32 @@ namespace PackageHelper
         public static byte[] GetContent(byte[] package, int packageLength)
         {
             return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
+        }
+
+        public static async Task<Query> GetFullContent(Socket socket)
+        {
+            var content = new List<byte>();
+            var buffer = new byte[MaxPackageSize];
+            int packageLength;
+            byte[] command = new byte[4];
+
+            while (socket.Connected)
+            {
+                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+
+                if (!IsPackageValid(buffer, packageLength)) throw new Exception();
+
+                command = GetCommand(buffer);
+                content.AddRange(GetContent(buffer, packageLength));
+
+                if (IsPartial(buffer))
+                {
+                    continue;
+                }
+                break;
+            }
+
+            return new Query { Body = content.ToArray(), Command = command };
         }
 
         public static byte[] GetCommand(byte[] package)
