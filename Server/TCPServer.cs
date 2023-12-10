@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using PackageHelper;
 
 namespace Server
@@ -50,22 +51,22 @@ namespace Server
         {
             try
             {
+                var query = await GetFullContent(socket);
 
-                if ()
+                while(socket.Connected)
                 {
-                    if ()
+                    if (query.Command.Equals(Command.CreateSession))
                     {
-
-                        CreateSession("", socket);
+                        CreateSession(Encoding.UTF8.GetString(query.Body), socket);
                     }
                     else if ()
                     {
 
                     }
-                }
-                else
-                {
-                    throw new Exception();
+                    else
+                    {
+                        throw new Exception();
+                    }
                 }
             }
             catch
@@ -81,8 +82,10 @@ namespace Server
             {
                 Session session = new();
                 session.AddPlayer(name, player);
-
                 _sessions.Add(session.SessionId, session);
+
+
+
                 return true;
             }
             catch
@@ -91,23 +94,30 @@ namespace Server
             }
         }
 
-        async Task<List<byte>> GetFullContent(Socket socket)
+        async Task<Query> GetFullContent(Socket socket)
         {
             var content = new List<byte>();
             var buffer = new byte[Package.MaxPackageSize];
-            var packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+            int packageLength;
+            byte[] command = new byte[4];
 
             while (socket.Connected)
             {
+                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+
+                if (!Package.IsPackageValid(buffer, packageLength)) throw new Exception();
+
+                command = Package.GetCommand(buffer);
                 content.AddRange(Package.GetContent(buffer, packageLength));
 
                 if(Package.IsPartial(buffer))
                 {
                     continue;
                 }
+                break;
             }
 
-            return content;
+            return new Query { Body = content.ToArray(), Command = command };
         }
     }
 }

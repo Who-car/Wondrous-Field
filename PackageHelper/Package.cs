@@ -31,6 +31,11 @@ namespace PackageHelper
             return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
         }
 
+        public static byte[] GetCommand(byte[] package)
+        {
+            return package.Take(new Range(CommandStart, CommandEnd)).ToArray();
+        }
+
         public static byte[] CreatePackage(byte[] content, byte[] command, PackageFullness fullness, QueryType query)
         {
             return new PackageBuilder(content.Length)
