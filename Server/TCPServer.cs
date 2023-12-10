@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using PackageHelper;
 using ClientServerTransfer;
+using System.Runtime.InteropServices;
 
 namespace Server
 {
@@ -59,20 +60,12 @@ namespace Server
                 if (query.Command!.Equals(Command.CreateSession))
                 {
                     await CreateSession(Encoding.UTF8.GetString(query.Body!), socket);
-
-                    while(socket.Connected)
-                    {
-
-                    }
+                    await ListenSocketInLoopAsync(socket);
                 }
                 else if (query.Command.Equals(Command.Join))
                 {
                     await JoinToSession(Encoding.UTF8.GetString(query.Body!), socket, "");
-
-                    while(socket.Connected)
-                    {
-
-                    }
+                    await ListenSocketInLoopAsync(socket);
                 }
                 else
                 {
@@ -86,6 +79,33 @@ namespace Server
             }
         }
 
+        async Task ListenSocketInLoopAsync(Socket socket)
+        {
+            Query query;
+
+            while (socket.Connected)
+            {
+                query = await Package.GetFullContent(socket);
+
+                if (query.Command!.Equals(Command.NameTheLetter))
+                {
+
+                }
+                else if (query.Command!.Equals(Command.NameTheWord))
+                {
+
+                }
+                else if (query.Command!.Equals(Command.Post))
+                {
+
+                }
+                else if (query.Command!.Equals(Command.SendMessage))
+                {
+
+                }
+            }
+        }
+
         async Task<bool> CreateSession(string name, Socket player)
         {
             try
@@ -93,7 +113,7 @@ namespace Server
                 Session session = new();
                 session.AddPlayer(name, player);
                 _privateSessions.Add(session.SessionId, session);
-                await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfullJoin = true }));
+                await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
 
                 return true;
             }
@@ -112,12 +132,16 @@ namespace Server
                     if (_privateSessions.ContainsKey(sessionId))
                     {
                         _privateSessions[sessionId].AddPlayer(name, player);
-                        await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfullJoin = true }));
+                        await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
                     }
                 }
                 else
                 {
-
+                    var session = _freeSessions.Where(x => !x.Value.SessionIsFull).First().Value;
+                    if (session == null) session = new Session();
+                    session.AddPlayer(name, player);
+                    _freeSessions[session.SessionId] = session;
+                    await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
                 }
 
                 return true;
