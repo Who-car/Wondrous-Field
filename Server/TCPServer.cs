@@ -13,6 +13,7 @@ namespace Server
         readonly Socket _listener;
         readonly Dictionary<string, Session> _privateSessions;
         readonly Dictionary<string, Session> _freeSessions;
+        readonly Dictionary<string, Session> _gameSessions;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
@@ -20,6 +21,7 @@ namespace Server
             _listener.Bind(new IPEndPoint(ipAddress, port));
             _privateSessions = new();
             _freeSessions = new();
+            _gameSessions = new();
         }
 
         public async Task RunServerAsync()
@@ -89,11 +91,19 @@ namespace Server
 
                 if (query.Command!.Equals(Command.NameTheLetter))
                 {
-
+                    var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
+                    if(_gameSessions.ContainsKey(sessionInfo.SessionId!))
+                    {
+                        await _gameSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
+                    }
                 }
                 else if (query.Command!.Equals(Command.NameTheWord))
                 {
-
+                    var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
+                    if (_gameSessions.ContainsKey(sessionInfo.SessionId!))
+                    {
+                        await _gameSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
+                    }
                 }
                 else if (query.Command!.Equals(Command.Post))
                 {
@@ -101,9 +111,14 @@ namespace Server
                 }
                 else if (query.Command!.Equals(Command.SendMessage))
                 {
-
+                    await SendMessageToPlayers(socket, query.Body!);
                 }
             }
+        }
+
+        async Task SendMessageToPlayers(Socket socket, byte[] message)
+        {
+            //TODO: broadcast
         }
 
         async Task<bool> CreateSession(string name, Socket player)
@@ -113,7 +128,7 @@ namespace Server
                 Session session = new();
                 session.AddPlayer(name, player);
                 _privateSessions.Add(session.SessionId, session);
-                await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
 
                 return true;
             }
@@ -132,7 +147,7 @@ namespace Server
                     if (_privateSessions.ContainsKey(sessionId))
                     {
                         _privateSessions[sessionId].AddPlayer(name, player);
-                        await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
+                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
                     }
                 }
                 else
@@ -141,7 +156,7 @@ namespace Server
                     if (session == null) session = new Session();
                     session.AddPlayer(name, player);
                     _freeSessions[session.SessionId] = session;
-                    await SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
+                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
                 }
 
                 return true;
@@ -149,16 +164,6 @@ namespace Server
             catch
             {
                 return false;
-            }
-        }
-
-        async Task SendResponseToUser(Socket socket, byte[] content)
-        {
-            var packages = Package.GetPackages(content, Command.Post, QueryType.Response);
-
-            foreach(var package in packages)
-            {
-                await socket.SendAsync(package, SocketFlags.None);
             }
         }
     }

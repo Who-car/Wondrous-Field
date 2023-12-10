@@ -197,5 +197,15 @@ namespace PackageHelper
         {
             return buffer[Query] is (byte)QueryType.Response;
         }
+
+        public static async Task SendResponseToUser(Socket socket, byte[] content)
+        {
+            var packages = GetPackages(content, Command.Post, QueryType.Response);
+
+            foreach (var package in packages)
+            {
+                await socket.SendAsync(package, SocketFlags.None);
+            }
+        }
     }
 }
