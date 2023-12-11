@@ -1,9 +1,8 @@
-﻿using System.Net;
+﻿using ClientServerTransfer;
+using PackageHelper;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using PackageHelper;
-using ClientServerTransfer;
-using System.Runtime.InteropServices;
 
 namespace Server
 {
@@ -107,22 +106,31 @@ namespace Server
                 }
                 else if (query.Command!.Equals(Command.SendMessage))
                 {
-                    await SendMessageToPlayers(socket, query.Body!);
+                    var messageInfo = await Serialiser.Deserialise<Message>(query.Body!);
+                    if (_gameSessions.ContainsKey(messageInfo.SessionId!))
+                    {
+                        await _gameSessions[messageInfo.SessionId!].SendMessageToPlayers(socket, messageInfo.Content);
+                    }
+                    else
+                    {
+                        throw new Exception();
+                    }
+                }
+                else if (query.Command!.Equals(Command.Bye))
+                {
+                    await socket.DisconnectAsync(false);
                 }
             }
         }
 
-        async Task SendMessageToPlayers(Socket socket, byte[] message)
-        {
-            //TODO: broadcast
-        }
+        
 
         async Task<bool> CreateSession(string name, Socket player)
         {
             try
             {
                 Session session = new();
-                session.AddPlayer(name, player);
+                await session.AddPlayer(name, player);
                 _privateSessions.Add(session.SessionId, session);
                 await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
 
@@ -142,7 +150,7 @@ namespace Server
                 {
                     if (_privateSessions.ContainsKey(sessionId))
                     {
-                        _privateSessions[sessionId].AddPlayer(name, player);
+                        await _privateSessions[sessionId].AddPlayer(name, player);
                         await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
                     }
                 }
@@ -150,7 +158,7 @@ namespace Server
                 {
                     var session = _freeSessions.Where(x => !x.Value.SessionIsFull).First().Value;
                     if (session == null) session = new Session();
-                    session.AddPlayer(name, player);
+                    await session.AddPlayer(name, player);
                     _freeSessions[session.SessionId] = session;
                     await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
                 }

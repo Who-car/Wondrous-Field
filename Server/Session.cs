@@ -1,6 +1,7 @@
 ﻿using System.Net.Sockets;
 using PackageHelper;
 using ClientServerTransfer;
+using System.Diagnostics.Metrics;
 
 namespace Server
 {
@@ -40,12 +41,61 @@ namespace Server
 
         public async Task NameTheLetter(Socket player, char letter)
         {
-            //TODO: game
+            var info = new SessionInfo();
+            
+            if (IsExistedPlayer(player))
+            {
+                for(var i = 0; i < Word.Length; i++)
+                {
+                    if (Word[i].Equals(letter))
+                    {
+                        GuessedLetters[i] = letter;
+                        info.IsGuessed = true;
+                        info.Word = GuessedLetters;
+                    }
+                }
+
+                foreach(var p in _players.Keys)
+                {
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(info));
+                }
+            }
+            else
+            {
+                throw new Exception();
+            }
         }
 
         public async Task NameTheWord(Socket player, char[] word)
         {
+            var info = new SessionInfo();
 
+            if (IsExistedPlayer(player))
+            {
+                info.IsWin = Word.SequenceEqual(word);
+
+                foreach (var p in _players.Keys)
+                {
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(info));
+                }
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+
+        bool IsExistedPlayer(Socket player)
+        {
+            return _players.ContainsKey(player);
+        }
+
+        public async Task SendMessageToPlayers(Socket socket, string message)
+        {
+            foreach (var p in _players.Keys)
+            {
+                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(message));
+            }
         }
     }
 }
