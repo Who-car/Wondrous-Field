@@ -62,17 +62,13 @@ namespace Server
                 if (query.Command!.Equals(Command.CreateSession))
                 {
                     await CreateSession(Encoding.UTF8.GetString(query.Body!), socket);
-                    await ListenSocketInLoopAsync(socket);
                 }
                 else if (query.Command.Equals(Command.Join))
                 {
                     await JoinToSession(Encoding.UTF8.GetString(query.Body!), socket, "");
-                    await ListenSocketInLoopAsync(socket);
                 }
-                else
-                {
-                    throw new Exception();
-                }
+
+                await ListenSocketInLoopAsync(socket);
             }
             catch
             {
