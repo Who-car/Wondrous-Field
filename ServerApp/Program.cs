@@ -1,4 +1,5 @@
 ﻿using Server;
+using System.Net.Sockets;
 
 namespace ServerApp
 {
@@ -6,7 +7,9 @@ namespace ServerApp
     {
         static async Task Main(string[] args)
         {
-            var server = new TCPServer(new System.Net.IPAddress(1234543), 5050);
+            var ip = new System.Net.IPAddress(new byte[] { 127, 0, 0, 1 });
+            var port = 5051;
+            var server = new TCPServer(ip, port);
             await server.RunServerAsync();
         }
     }

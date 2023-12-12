@@ -1,6 +1,6 @@
 ﻿namespace PackageHelper
 {
-    public class Query
+    public class ReceivedData
     {
         public byte[] Command { get; set; }
 

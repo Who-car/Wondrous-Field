@@ -11,16 +11,16 @@ namespace Server
 
         readonly Socket _listener;
         readonly Dictionary<string, Session> _privateSessions;
-        readonly Dictionary<string, Session> _freeSessions;
-        readonly Dictionary<string, Session> _gameSessions;
+        readonly Dictionary<string, Session> _openSessions;
+        readonly Dictionary<string, Session> _inGameProcessSessions;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(new IPEndPoint(ipAddress, port));
             _privateSessions = new();
-            _freeSessions = new();
-            _gameSessions = new();
+            _openSessions = new();
+            _inGameProcessSessions = new();
         }
 
         public async Task RunServerAsync()
@@ -37,11 +37,11 @@ namespace Server
 
                     _ = Task.Run(
                         async() => 
-                            await ProcessClientSocketAsync(clientSocket));
+                            await ProcessClientAsync(clientSocket));
 
                 } while (true);
             }
-            catch (Exception ex)
+            catch
             {
                 //TODO: журналирование
             }
@@ -52,7 +52,7 @@ namespace Server
             }
         }
 
-        async Task ProcessClientSocketAsync(Socket socket)
+        async Task ProcessClientAsync(Socket socket)
         {
             try
             {
@@ -78,7 +78,7 @@ namespace Server
 
         async Task ListenSocketInLoopAsync(Socket socket)
         {
-            Query query;
+            ReceivedData query;
 
             while (socket.Connected)
             {
@@ -87,17 +87,17 @@ namespace Server
                 if (query.Command!.Equals(Command.NameTheLetter))
                 {
                     var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
-                    if(_gameSessions.ContainsKey(sessionInfo.SessionId!))
+                    if(_inGameProcessSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _gameSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
+                        await _inGameProcessSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
                     }
                 }
                 else if (query.Command!.Equals(Command.NameTheWord))
                 {
                     var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
-                    if (_gameSessions.ContainsKey(sessionInfo.SessionId!))
+                    if (_inGameProcessSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _gameSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
+                        await _inGameProcessSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
                     }
                 }
                 else if (query.Command!.Equals(Command.Post))
@@ -107,9 +107,9 @@ namespace Server
                 else if (query.Command!.Equals(Command.SendMessage))
                 {
                     var messageInfo = await Serialiser.Deserialise<Message>(query.Body!);
-                    if (_gameSessions.ContainsKey(messageInfo.SessionId!))
+                    if (_inGameProcessSessions.ContainsKey(messageInfo.SessionId!))
                     {
-                        await _gameSessions[messageInfo.SessionId!].SendMessageToPlayers(socket, messageInfo.Content);
+                        await _inGameProcessSessions[messageInfo.SessionId!].SendMessageToPlayers(socket, messageInfo.Content);
                     }
                     else
                     {
@@ -156,10 +156,10 @@ namespace Server
                 }
                 else
                 {
-                    var session = _freeSessions.Where(x => !x.Value.SessionIsFull).First().Value;
+                    var session = _openSessions.Where(x => !x.Value.SessionIsFull).First().Value;
                     if (session == null) session = new Session();
                     await session.AddPlayer(name, player);
-                    _freeSessions[session.SessionId] = session;
+                    _openSessions[session.SessionId] = session;
                     await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
                 }
 

@@ -31,7 +31,7 @@ namespace PackageHelper
             return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
         }
 
-        public static async Task<Query> GetFullContent(Socket socket)
+        public static async Task<ReceivedData> GetFullContent(Socket socket)
         {
             var content = new List<byte>();
             var buffer = new byte[MaxPackageSize];
@@ -54,7 +54,7 @@ namespace PackageHelper
                 break;
             }
 
-            return new Query { Body = content.ToArray(), Command = command };
+            return new ReceivedData { Body = content.ToArray(), Command = command };
         }
 
         public static byte[] GetCommand(byte[] package)
