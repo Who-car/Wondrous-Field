@@ -29,69 +29,100 @@
             <ItemsControl Grid.Row="1" x:Name="CharactersControl"
                           HorizontalAlignment="Center" 
                           VerticalAlignment="Center"
-                          ItemsSource="{Binding WordLetters}"
-                          ItemTemplateSelector="{StaticResource CellTemplateSelector}">
+                          ItemsSource="{Binding WordLetters}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBox Style="{StaticResource EmptyCell}"
+                                 IsEnabled="{Binding IsEnabled}"
+                                 PreviewMouseDown="TextBox_OnMouseDown"
+                                 TextChanged="TextBox_OnTextInput"></TextBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
-            <TextBlock 
-                Grid.Row="2"
-                Style="{StaticResource PlainText}"
-                Visibility="{Binding IsTurn, Converter={StaticResource BooleanToVisibilityConverter}}">
-                Ваш ход
-            </TextBlock>
-            <TextBlock 
-                Grid.Row="2"
-                Style="{StaticResource PlainText}"
-                Visibility="{Binding IsTurn, Converter={StaticResource BooleanToVisibilityConverter}}">
-                Ход кого-то...
-            </TextBlock>
             <Button 
-                Grid.Row="3" 
+                Grid.Row="2" 
                 Style="{DynamicResource RoundButton}"
                 Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Click="OpenLetter">
                 открыть букву
             </Button>
-            <TextBlock 
-                Grid.Row="3"
-                Style="{StaticResource PlainText}"
-                Visibility="{Binding LetterChosen, Converter={StaticResource BooleanToVisibilityConverter}}">
-                Выберите букву
-            </TextBlock>
             <Button 
-                Grid.Row="4" 
+                Grid.Row="3" 
                 Style="{DynamicResource RoundButton}"
                 Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Click="OpenWord">
                 открыть слово
             </Button>
             <TextBlock 
-                Grid.Row="3"
+                Grid.Row="4"
                 Style="{StaticResource PlainText}"
-                Visibility="{Binding WordChosen, Converter={StaticResource BooleanToVisibilityConverter}}">
-                Введите слово
+                Text="{Binding Info}">
             </TextBlock>
         </Grid>
         <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0" Visibility="Collapsed"/>
         <Button 
             x:Name="ChatButton"
-            Style="{StaticResource ChatButton}"
-            Click="ChatButton_Click">
+            Style="{StaticResource ChatButton}">
         </Button>
-        <DockPanel 
-            x:Name="ChatPanel" 
-            HorizontalAlignment="Left"
-            Background="#FFFFFF"
-            Width="0">
-            <TextBlock 
-                Style="{StaticResource PlainText}" 
-                TextWrapping="NoWrap">
-                Борис
-            </TextBlock>
+        <DockPanel x:Name="ChatPanel"
+                   HorizontalAlignment="Left"
+                   Background="#FFFFFF"
+                   Width="0">
+            <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="150"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer 
+                Grid.Row="0"
+                VerticalScrollBarVisibility="Hidden">
+                <DockPanel>
+                    <ItemsControl x:Name="MessagesControl"
+                                  HorizontalAlignment="Left" 
+                                  VerticalAlignment="Top"
+                                  ItemsSource="{Binding Messages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical"
+                                            MinWidth="300">
+                                    <TextBlock Text="{Binding Author}"
+                                               Style="{StaticResource PlainText}"
+                                               HorizontalAlignment="Left"
+                                               Margin="10 15 0 0"/>
+                                    <Border Style="{StaticResource ChatBorder}">
+                                        <TextBlock Style="{StaticResource ChatText}"
+                                                   Text="{Binding Text}"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </DockPanel>
+            </ScrollViewer>
+            <StackPanel
+                Grid.Row="1"
+                Orientation="Horizontal"
+                Margin="10 0 0 15">
+                <TextBox 
+                    x:Name="ChatInput"
+                    Style="{StaticResource MessageField}"
+                    KeyUp="ChatInput_OnKeyUp"></TextBox>
+                <Button 
+                    Style="{StaticResource SendButton}"
+                    Click="ChatButton_Click">
+                </Button>
+            </StackPanel>
+        </Grid>
         </DockPanel>
     </Grid>
     <Page.Triggers>

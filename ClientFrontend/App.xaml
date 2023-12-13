@@ -126,6 +126,40 @@
             <Setter Property="HorizontalAlignment" Value="Center"></Setter>
             <Setter Property="VerticalAlignment" Value="Center"></Setter>
         </Style>
+        <Style x:Key="ChatBorder" BasedOn="{StaticResource FilledCell}" TargetType="Border">
+            <Setter Property="Width" Value="340"></Setter>
+            <Setter Property="Height" Value="Auto"></Setter>
+            <Setter Property="MinHeight" Value="40"></Setter>
+            <Setter Property="Margin" Value="10 15 0 0 "></Setter>
+            <Setter Property="CornerRadius" Value="7"></Setter>
+        </Style>
+        <Style x:Key="ChatText" BasedOn="{StaticResource CellContent}" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="26"></Setter>
+            <Setter Property="TextWrapping" Value="Wrap"></Setter>
+            <Setter Property="TextAlignment" Value="Justify"></Setter>
+        </Style>
+        <Style x:Key="MessageField" BasedOn="{StaticResource EmptyCell}" TargetType="TextBox">
+            <Setter Property="Margin" Value="0 0 0 0"></Setter>
+            <Setter Property="FontSize" Value="26"></Setter>
+            <Setter Property="CharacterCasing" Value="Normal"></Setter>
+            <Setter Property="HorizontalContentAlignment" Value="Left"></Setter>
+            <Setter Property="CaretBrush" Value="#000000"></Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBoxBase">
+                        <Border 
+                            x:Name="Bd" 
+                            BorderBrush="#D9D9D9"
+                            BorderThickness="5" 
+                            CornerRadius="15"
+                            Width="325"
+                            Height="80"> 
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+        </Style>
         <Style x:Key="ChatButton" TargetType="Button">
             <Setter Property="Margin" Value="10 10 0 0 "></Setter>
             <Setter Property="Width" Value="50"></Setter>
@@ -149,11 +183,10 @@
             </Setter>
         </Style>
         <Style x:Key="SendButton" TargetType="Button">
-            <Setter Property="Margin" Value="10 10 0 0 "></Setter>
-            <Setter Property="Width" Value="50"></Setter>
-            <Setter Property="Height" Value="50"></Setter>
-            <Setter Property="HorizontalAlignment" Value="Left"></Setter>
-            <Setter Property="VerticalAlignment" Value="Top"></Setter>
+            <Setter Property="Width" Value="80"></Setter>
+            <Setter Property="Height" Value="80"></Setter>
+            <Setter Property="HorizontalAlignment" Value="Center"></Setter>
+            <Setter Property="VerticalAlignment" Value="Center"></Setter>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -197,7 +230,7 @@
         </DataTemplate>
         <DataTemplate x:Key="FilledData">
             <Border Style="{StaticResource FilledCell}">
-                <TextBlock Text="{Binding Text}"/>
+                <TextBlock Text="{Binding Text}" Style="{StaticResource CellContent}"/>
             </Border>
         </DataTemplate>
         <uiElementHelpers:CellSelectorTemplate x:Key="CellTemplateSelector"
