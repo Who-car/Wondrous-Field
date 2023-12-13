@@ -1,31 +1,26 @@
-﻿using System.Net;
-using System.Net.Sockets;
+﻿using ClientServerTransfer;
 using PackageHelper;
-using DatabaseController;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
 namespace Server
 {
     public class TCPServer
     {
-        Dictionary<string, List<string>> _sessions;
-        static Semaphore gamesSem = new Semaphore(3, 3);
-        Dictionary<Socket, string> _players;
-        readonly Dictionary<Socket, string> _clients;
-        DBController _db;
-        Distributor _distributor;
 
         readonly Socket _listener;
+        readonly Dictionary<string, Session> _privateSessions;
+        readonly Dictionary<string, Session> _openSessions;
+        readonly Dictionary<string, Session> _inGameProcessSessions;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _listener.Bind(new IPEndPoint(ipAddress, port));
-            _sessions = new();
-            _players = new();
-            _clients = new();
-            _db = new("");
-            _distributor = new();
+            _privateSessions = new();
+            _openSessions = new();
+            _inGameProcessSessions = new();
         }
 
         public async Task RunServerAsync()
@@ -42,11 +37,11 @@ namespace Server
 
                     _ = Task.Run(
                         async() => 
-                            await ProcessClientSocketAsync(clientSocket));
+                            await ProcessClientAsync(clientSocket));
 
                 } while (true);
             }
-            catch (Exception ex)
+            catch
             {
                 //TODO: журналирование
             }
@@ -57,91 +52,123 @@ namespace Server
             }
         }
 
-        async Task ProcessClientSocketAsync(Socket socket)
+        async Task ProcessClientAsync(Socket socket)
         {
             try
             {
-                var buffer = new byte[Package.MaxPackageSize];
-                var contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+                var query = await Package.GetFullContent(socket);
 
-                if (PackageChecker.IsQueryValid(buffer, contentLength))
+                if (query.Command!.Equals(Command.CreateSession))
                 {
-                    if (PackageChecker.IsSignUp(buffer))
-                    {
-                        var content = new List<byte>();
-                        content.AddRange(Package.GetContent(buffer, contentLength));
-
-                        if (PackageChecker.IsPartial(buffer))
-                        {
-                            while (socket.Connected)
-                            {
-                                contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-                                if (!PackageChecker.IsPartial(buffer))
-                                {
-                                    content.AddRange(Package.GetContent(buffer, contentLength));
-                                    break;
-                                }
-                                content.AddRange(Package.GetContent(buffer, contentLength));
-                            }
-                        }
-
-                        var message = await _db.AddUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
-
-                    }
-                    else if (PackageChecker.IsSignIn(buffer))
-                    {
-                        var content = new List<byte>();
-                        content.AddRange(Package.GetContent(buffer, contentLength));
-
-                        if (PackageChecker.IsPartial(buffer))
-                        {
-                            while (socket.Connected)
-                            {
-                                contentLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-                                if (!PackageChecker.IsPartial(buffer))
-                                {
-                                    content.AddRange(Package.GetContent(buffer, contentLength));
-                                    break;
-                                }
-                                content.AddRange(Package.GetContent(buffer, contentLength));
-                            }
-                        }
-
-                        var message = await _db.CheckUser(await CustomJsonSerialiser.Deserialise<User>(Encoding.UTF8.GetString(content.ToArray())));
-                    }
-                    else
-                    {
-
-                        while(socket.Connected)
-                        {
-                            if (PackageChecker.IsJoin(buffer))
-                            {
-
-                            }
-
-                        }
-                    }
+                    await CreateSession(Encoding.UTF8.GetString(query.Body!), socket);
                 }
-                else
+                else if (query.Command.Equals(Command.Join))
                 {
-                    throw new Exception();
+                    await JoinToSession(Encoding.UTF8.GetString(query.Body!), socket, "");
                 }
+
+                await ListenSocketInLoopAsync(socket);
             }
             catch
             {
                 //TODO: Exception
-            }
-            finally
-            {
-                _clients.Remove(socket);
                 await socket.DisconnectAsync(false);
             }
         }
 
-        async Task ProcessSessionAsync(Socket socket)
+        async Task ListenSocketInLoopAsync(Socket socket)
         {
+            ReceivedData query;
 
+            while (socket.Connected)
+            {
+                query = await Package.GetFullContent(socket);
+
+                if (query.Command!.Equals(Command.NameTheLetter))
+                {
+                    var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
+                    if(_inGameProcessSessions.ContainsKey(sessionInfo.SessionId!))
+                    {
+                        await _inGameProcessSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
+                    }
+                }
+                else if (query.Command!.Equals(Command.NameTheWord))
+                {
+                    var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
+                    if (_inGameProcessSessions.ContainsKey(sessionInfo.SessionId!))
+                    {
+                        await _inGameProcessSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
+                    }
+                }
+                else if (query.Command!.Equals(Command.Post))
+                {
+
+                }
+                else if (query.Command!.Equals(Command.SendMessage))
+                {
+                    var messageInfo = await Serialiser.Deserialise<Message>(query.Body!);
+                    if (_inGameProcessSessions.ContainsKey(messageInfo.SessionId!))
+                    {
+                        await _inGameProcessSessions[messageInfo.SessionId!].SendMessageToPlayers(socket, messageInfo.Content);
+                    }
+                    else
+                    {
+                        throw new Exception();
+                    }
+                }
+                else if (query.Command!.Equals(Command.Bye))
+                {
+                    await socket.DisconnectAsync(false);
+                }
+            }
         }
-        //TODO: Broadcast
+
+        
+
+        async Task<bool> CreateSession(string name, Socket player)
+        {
+            try
+            {
+                Session session = new();
+                await session.AddPlayer(name, player);
+                _privateSessions.Add(session.SessionId, session);
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        async Task<bool> JoinToSession(string name, Socket player, string sessionId)
+        {
+            try
+            {
+                if(sessionId != null)
+                {
+                    if (_privateSessions.ContainsKey(sessionId))
+                    {
+                        await _privateSessions[sessionId].AddPlayer(name, player);
+                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
+                    }
+                }
+                else
+                {
+                    var session = _openSessions.Where(x => !x.Value.SessionIsFull).First().Value;
+                    if (session == null) session = new Session();
+                    await session.AddPlayer(name, player);
+                    _openSessions[session.SessionId] = session;
+                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

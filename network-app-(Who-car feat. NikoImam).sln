@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientFrontend", "ClientFro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{F5D8B068-2B0E-4850-A1A7-46EF27FE4DFE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientServerTransfer", "ClientServerTransfer\ClientServerTransfer.csproj", "{CED78291-CDC3-4288-8D7B-EEAC90810758}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{F5D8B068-2B0E-4850-A1A7-46EF27FE4DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5D8B068-2B0E-4850-A1A7-46EF27FE4DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F5D8B068-2B0E-4850-A1A7-46EF27FE4DFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

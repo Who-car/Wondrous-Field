@@ -1,4 +1,4 @@
-﻿using System.Security;
+﻿using System.Net.Sockets;
 
 namespace PackageHelper
 {
@@ -31,6 +31,37 @@ namespace PackageHelper
             return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
         }
 
+        public static async Task<ReceivedData> GetFullContent(Socket socket)
+        {
+            var content = new List<byte>();
+            var buffer = new byte[MaxPackageSize];
+            int packageLength;
+            byte[] command = new byte[4];
+
+            while (socket.Connected)
+            {
+                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+
+                if (!IsPackageValid(buffer, packageLength)) throw new Exception();
+
+                command = GetCommand(buffer);
+                content.AddRange(GetContent(buffer, packageLength));
+
+                if (IsPartial(buffer))
+                {
+                    continue;
+                }
+                break;
+            }
+
+            return new ReceivedData { Body = content.ToArray(), Command = command };
+        }
+
+        public static byte[] GetCommand(byte[] package)
+        {
+            return package.Take(new Range(CommandStart, CommandEnd)).ToArray();
+        }
+
         public static byte[] CreatePackage(byte[] content, byte[] command, PackageFullness fullness, QueryType query)
         {
             return new PackageBuilder(content.Length)
@@ -52,15 +83,12 @@ namespace PackageHelper
 
                 for (var i = 0; i < chunksCount; i++)
                 {
+                    var fullness = PackageFullness.Partial;
                     if (i == chunksCount - 1)
                     {
-                        packages.Add(CreatePackage(content, command, PackageFullness.Full, query));
-                        break;
+                        fullness = PackageFullness.Full;
                     }
-                    else
-                    {
-                        packages.Add(CreatePackage(content, command, PackageFullness.Partial, query));
-                    }
+                    packages.Add(CreatePackage(content, command, fullness, query));
                 }
             }
             else
@@ -168,6 +196,16 @@ namespace PackageHelper
         public static bool IsResponse(byte[] buffer)
         {
             return buffer[Query] is (byte)QueryType.Response;
+        }
+
+        public static async Task SendResponseToUser(Socket socket, byte[] content)
+        {
+            var packages = GetPackages(content, Command.Post, QueryType.Response);
+
+            foreach (var package in packages)
+            {
+                await socket.SendAsync(package, SocketFlags.None);
+            }
         }
     }
 }
