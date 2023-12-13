@@ -119,6 +119,8 @@ namespace Server
                     }
                 }
 
+                info.IsWin = Word.SequenceEqual(GuessedLetters!);
+
                 foreach(var p in _players.Keys)
                 {
                     await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
