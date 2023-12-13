@@ -1,0 +1,164 @@
+﻿<Page x:Class="ClientFrontend.Views.GameView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:ClientFrontend.Views"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        mc:Ignorable="d"
+        Title="GameView" Height="830" Width="1280">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Page.Resources>
+    <Grid>
+        <Grid
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="250"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock 
+                Grid.Row="0"
+                Style="{StaticResource PlainText}">
+                Лучшее создание на Земле это:
+            </TextBlock>
+            <ItemsControl Grid.Row="1" x:Name="CharactersControl"
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center"
+                          ItemsSource="{Binding WordLetters}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBox Style="{StaticResource EmptyCell}"
+                                 IsEnabled="{Binding IsEnabled}"
+                                 PreviewMouseDown="TextBox_OnMouseDown"
+                                 TextChanged="TextBox_OnTextInput"></TextBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+            <Button 
+                Grid.Row="2" 
+                Style="{DynamicResource RoundButton}"
+                Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Click="OpenLetter">
+                открыть букву
+            </Button>
+            <Button 
+                Grid.Row="3" 
+                Style="{DynamicResource RoundButton}"
+                Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Click="OpenWord">
+                открыть слово
+            </Button>
+            <TextBlock 
+                Grid.Row="4"
+                Style="{StaticResource PlainText}"
+                Text="{Binding Info}">
+            </TextBlock>
+        </Grid>
+        <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0" Visibility="Collapsed"/>
+        <Button 
+            x:Name="ChatButton"
+            Style="{StaticResource ChatButton}">
+        </Button>
+        <DockPanel x:Name="ChatPanel"
+                   HorizontalAlignment="Left"
+                   Background="#FFFFFF"
+                   Width="0">
+            <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="150"/>
+            </Grid.RowDefinitions>
+            <ScrollViewer 
+                Grid.Row="0"
+                VerticalScrollBarVisibility="Hidden">
+                <DockPanel>
+                    <ItemsControl x:Name="MessagesControl"
+                                  HorizontalAlignment="Left" 
+                                  VerticalAlignment="Top"
+                                  ItemsSource="{Binding Messages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical"
+                                            MinWidth="300">
+                                    <TextBlock Text="{Binding Author}"
+                                               Style="{StaticResource PlainText}"
+                                               HorizontalAlignment="Left"
+                                               Margin="10 15 0 0"/>
+                                    <Border Style="{StaticResource ChatBorder}">
+                                        <TextBlock Style="{StaticResource ChatText}"
+                                                   Text="{Binding Text}"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </DockPanel>
+            </ScrollViewer>
+            <StackPanel
+                Grid.Row="1"
+                Orientation="Horizontal"
+                Margin="10 0 0 15">
+                <TextBox 
+                    x:Name="ChatInput"
+                    Style="{StaticResource MessageField}"
+                    KeyUp="ChatInput_OnKeyUp"></TextBox>
+                <Button 
+                    Style="{StaticResource SendButton}"
+                    Click="ChatButton_Click">
+                </Button>
+            </StackPanel>
+        </Grid>
+        </DockPanel>
+    </Grid>
+    <Page.Triggers>
+        <EventTrigger RoutedEvent="MouseDown">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="ChatPanel"
+                                     Storyboard.TargetProperty="Width"
+                                     To="0" Duration="0:0:0.3"/>
+                    <DoubleAnimation Storyboard.TargetName="Overlay"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="0.0" Duration="0:0:0.3"/>
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Overlay"
+                                                   Storyboard.TargetProperty="Visibility"
+                                                   Duration="0:0:0.3">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0.3" Value="{x:Static Visibility.Collapsed}"/>
+                    </ObjectAnimationUsingKeyFrames>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+        <EventTrigger RoutedEvent="Button.Click" SourceName="ChatButton">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="ChatPanel"
+                                     Storyboard.TargetProperty="Width"
+                                     To="450" Duration="0:0:0.3"/>
+                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Overlay"
+                                                   Storyboard.TargetProperty="Visibility"
+                                                   Duration="0:0:0">
+                        <DiscreteObjectKeyFrame KeyTime="0:0:0.0" Value="{x:Static Visibility.Visible}"/>
+                    </ObjectAnimationUsingKeyFrames>
+                    <DoubleAnimation Storyboard.TargetName="Overlay"
+                                     Storyboard.TargetProperty="Opacity"
+                                     From="0.0" To="0.5" Duration="0:0:0.3"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Page.Triggers>
+</Page>

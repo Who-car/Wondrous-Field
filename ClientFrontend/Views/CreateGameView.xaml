@@ -1,0 +1,52 @@
+﻿<Page x:Class="ClientFrontend.Views.CreateGameView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:ClientFrontend.Views"
+        mc:Ignorable="d"
+        Title="CreateGameView" Height="830" Width="1280">
+    <Grid>
+        <Button 
+            x:Name="ChatButton"
+            Style="{StaticResource ReturnButton}"
+            Click="ReturnButton_Click">
+        </Button>
+        <Grid
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBlock 
+                Grid.Row="0"
+                Style="{StaticResource Header}">
+                НОВАЯ ИГРА
+            </TextBlock>
+            <TextBlock 
+                Grid.Row="1"
+                Style="{StaticResource PlainText}">
+                сообщите участникам данный код
+            </TextBlock>
+            <ItemsControl Grid.Row="2" x:Name="CharactersControl" 
+                          HorizontalAlignment="Center" 
+                          VerticalAlignment="Center">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource FilledCell}">
+                            <TextBlock Style="{StaticResource CellContent}" Text="{Binding}"/>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </Grid>
+    </Grid>
+</Page>
