@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using System.Threading.Channels;
 using ClientServerTransfer;
 using PackageHelper;
 using static PackageHelper.Command;
@@ -12,26 +13,34 @@ public class AntpClient
 {
     private readonly Socket _socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private readonly Guid _clientId = Guid.NewGuid();
+    private string _playerName;
     private bool _gameStarted;
     public SessionInfo SessionInfo { get; set; }
     public bool IsTurn => _clientId == SessionInfo.CurrentPlayerId;
-    public delegate void ProgressHandler(SessionInfo sessionInfo);
     public delegate void MessageHandler(Message message);
     public delegate void SessionHandler(SessionInfo connectionInfo);
-    public ProgressHandler OnTurn { get; set; }
-    public MessageHandler MessageReceived { get; set; }
+    public delegate void WinHandler(string winner);
+    public SessionHandler OnTurn { get; set; }
     public SessionHandler OnGameStart { get; set; }
+    public WinHandler GameOver { get; set; }
+    public MessageHandler MessageReceived { get; set; }
+    
     
     public async Task<ConnectionInfo> StartNewGame(string playerName="Player")
     {
         try
         {
             await _socket.ConnectAsync("localhost", 5000);
-            var package = new PackageBuilder(playerName.Length)
+            var connection = await Serialiser.SerialiseToBytes(new ConnectionInfo
+            {
+                PlayerName = playerName, 
+                PlayerId = _clientId
+            });
+            var package = new PackageBuilder(connection.Length)
                 .SetCommand(CreateSession)
                 .SetFullness(Full)
                 .SetQueryType(Request)
-                .SetContent(await Serialiser.SerialiseToBytes(playerName))
+                .SetContent(connection)
                 .Build();
             await _socket.SendAsync(package, SocketFlags.None);
             var buffer = new byte[MaxPackageSize];
@@ -42,6 +51,7 @@ public class AntpClient
                 || !IsCreateSession(buffer))
                 throw new Exception("Couldn't create session. Try again later");
             var content = GetContent(buffer, bufferLength);
+            _playerName = playerName;
             return await Serialiser.Deserialise<ConnectionInfo>(content);
         }
         catch (Exception e)
@@ -55,7 +65,6 @@ public class AntpClient
         finally
         {
             // TODO: как работает getAwaiter? Может надо просто запускать бэкграунд таск
-            // TODO: этот блок не должен отрабатывать, если попали в catch. Но вернуть из метода как-то значения надо
             var listenTask = Listen();
             listenTask.GetAwaiter().GetResult();
         }
@@ -66,11 +75,17 @@ public class AntpClient
         try
         {
             await _socket.ConnectAsync("localhost", 5000);
-            var package = new PackageBuilder(playerName.Length)
+            var connection = await Serialiser.SerialiseToBytes(new ConnectionInfo()
+            {
+                PlayerName = playerName, 
+                PlayerId = _clientId,
+                SessionId = sessionId
+            });
+            var package = new PackageBuilder(connection.Length)
                 .SetCommand(Join)
                 .SetFullness(Full)
                 .SetQueryType(Request)
-                .SetContent(await Serialiser.SerialiseToBytes(new ConnectionInfo() {PlayerName = playerName, SessionId = sessionId}))
+                .SetContent(connection)
                 .Build();
             await _socket.SendAsync(package, SocketFlags.None);
             var buffer = new byte[MaxPackageSize];
@@ -81,6 +96,7 @@ public class AntpClient
                 || !IsJoin(buffer))
                 throw new Exception("Couldn't join session. Try again later");
             var content = GetContent(buffer, bufferLength);
+            _playerName = playerName;
             return await Serialiser.Deserialise<ConnectionInfo>(content);
         }
         catch (Exception e)
@@ -106,7 +122,7 @@ public class AntpClient
             var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
             if (!IsPackageValid(buffer, bufferLength)
                 || !IsResponse(buffer))
-                throw new Exception("Couldn't join session. Try again later");
+                continue;
             var content = GetContent(buffer, bufferLength);
 
             if (IsMessage(buffer))
@@ -127,6 +143,82 @@ public class AntpClient
                 }
             }
         } while (_socket.Connected);
+    }
+
+    public async Task<bool> CheckLetter(char letter, short letterPosition)
+    {
+        if (!_socket.Connected)
+            throw new ChannelClosedException("Internet connection error");
+        var session = await Serialiser.SerialiseToBytes(new SessionInfo
+        {
+            Letter = letter,
+            LetterPosition = letterPosition,
+            SessionId = SessionInfo.SessionId,
+            CurrentPlayerId = _clientId
+        });
+        var package = new PackageBuilder(session.Length)
+            .SetCommand(NameTheLetter)
+            .SetFullness(Full)
+            .SetQueryType(Request)
+            .SetContent(session)
+            .Build();
+        await _socket.SendAsync(package, SocketFlags.None);
+        var buffer = new byte[MaxPackageSize];
+        var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
+        if (!IsPackageValid(buffer, bufferLength)
+            || !IsResponse(buffer)
+            || !IsFull(buffer)
+            || !IsPost(buffer))
+            throw new Exception("Couldn't parse value. Try again later");
+        var content = await Serialiser.Deserialise<SessionInfo>(GetContent(buffer, bufferLength));
+        if (content.IsWin)
+            GameOver.Invoke(_playerName);
+        return content.IsGuessed;
+    }
+    
+    public async Task<bool> CheckWord(string word)
+    {
+        if (!_socket.Connected)
+            throw new ChannelClosedException("Internet connection error");
+        var session = await Serialiser.SerialiseToBytes(new SessionInfo
+        {
+            Word = word.ToCharArray(),
+            SessionId = SessionInfo.SessionId,
+            CurrentPlayerId = _clientId
+        });
+        var package = new PackageBuilder(session.Length)
+            .SetCommand(NameTheWord)
+            .SetFullness(Full)
+            .SetQueryType(Request)
+            .SetContent(session)
+            .Build();
+        await _socket.SendAsync(package, SocketFlags.None);
+        var buffer = new byte[MaxPackageSize];
+        var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
+        if (!IsPackageValid(buffer, bufferLength)
+            || !IsResponse(buffer)
+            || !IsFull(buffer)
+            || !IsPost(buffer))
+            throw new Exception("Couldn't parse value. Try again later");
+        var content = await Serialiser.Deserialise<SessionInfo>(GetContent(buffer, bufferLength));
+        if (content.IsWin)
+            GameOver.Invoke(_playerName);
+        return content.IsGuessed;
+    }
+    
+    public async Task ReportMessage(string message)
+    {
+        if (!_socket.Connected)
+            throw new ChannelClosedException("Internet connection error");
+        var request = await Serialiser.SerialiseToBytes(new Message()
+        {
+            PlayerName = _playerName,
+            SessionId = SessionInfo.SessionId,
+            Content = message
+        });
+        var packages = GetPackages(request, SendMessage, Request);
+        foreach (var package in packages)
+            await _socket.SendAsync(package, SocketFlags.None);
     }
 
     public async Task Exit()
