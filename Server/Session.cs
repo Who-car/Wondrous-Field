@@ -13,11 +13,11 @@ namespace Server
         readonly Dictionary<Socket, string> _players = new(3);
         int _playersCount = 0;
 
-        public char[] Word { get; init; }
-        public string Riddle { get; init; }
-        public char[] GuessedLetters { get; init; }
+        public char[]? Word { get; init; }
+        public string? Riddle { get; init; }
+        public char[]? GuessedLetters { get; init; }
 
-        public Socket currentPlayer;
+        public Socket? currentPlayer;
 
         public bool IsFull => _playersCount >= 3;
 
@@ -51,11 +51,11 @@ namespace Server
             
             if (IsExistedPlayer(player))
             {
-                for(var i = 0; i < Word.Length; i++)
+                for(var i = 0; i < Word!.Length; i++)
                 {
                     if (Word[i].Equals(letter))
                     {
-                        GuessedLetters[i] = letter;
+                        GuessedLetters![i] = letter;
                         info.IsGuessed = true;
                         info.Word = GuessedLetters;
                     }
@@ -78,7 +78,7 @@ namespace Server
 
             if (IsExistedPlayer(player))
             {
-                info.IsWin = Word.SequenceEqual(word);
+                info.IsWin = Word!.SequenceEqual(word);
 
                 foreach (var p in _players.Keys)
                 {
@@ -96,7 +96,7 @@ namespace Server
             return _players.ContainsKey(player);
         }
 
-        public async Task SendMessageToPlayers(Socket socket, string message)
+        public async Task SendMessageToPlayers(string message)
         {
             foreach (var p in _players.Keys)
             {

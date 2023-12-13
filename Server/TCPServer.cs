@@ -10,7 +10,7 @@ namespace Server
 {
     public class TCPServer
     {
-        Random random = new();
+        readonly Random random = new();
         readonly Socket _listener;
         readonly Dictionary<string, Session> _waitingSessions;
         readonly Dictionary<string, Session> _processingSessions;
@@ -108,7 +108,7 @@ namespace Server
                     var messageInfo = await Serialiser.DeserialiseAsync<Message>(received.Body!);
                     if (_processingSessions.ContainsKey(messageInfo.SessionId!))
                     {
-                        await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(socket, messageInfo.Content!);
+                        await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo.Content!);
                     }
                     else
                     {
