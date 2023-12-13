@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Client;
 
 namespace ClientFrontend.Views;
 

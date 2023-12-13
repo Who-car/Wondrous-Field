@@ -4,10 +4,12 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Client;
 using ClientFrontend.UIElementHelpers;
 
 namespace ClientFrontend.Views;
@@ -21,6 +23,8 @@ public partial class GameView : Page, INotifyPropertyChanged
     private bool _answerGiven;
     private const int WordLength = 7;
     private string _info;
+    private AntpClient _client;
+    // TODO: возможно можно избавиться от этих булек
     public bool HasChosen => !LetterChosen && !WordChosen && !IsTurn && !AnswerGiven;
 
     public bool LetterChosen
@@ -65,13 +69,19 @@ public partial class GameView : Page, INotifyPropertyChanged
     private readonly ObservableCollection<CellContent> WordLetters = new(
         new ObservableCollection<CellContent>(Enumerable.Repeat(new CellContent(), WordLength)));
     public ObservableCollection<Message> Messages = new();
-    public GameView(Frame mainFrame)
+    public GameView(Frame mainFrame, AntpClient client)
     {
         DataContext = this;
         InitializeComponent();
+        
+        _mainFrame = mainFrame;
+        _client = client;
+
+        _client.MessageReceived += message =>
+            Messages.Add(new Message { Author = message.PlayerName, Text = message.Content });
+        _client.OnTurn += info => IsTurn = client.IsTurn;
         CharactersControl.ItemsSource = WordLetters;
         MessagesControl.ItemsSource = Messages;
-        _mainFrame = mainFrame;
     }
 
     private void ChatInput_OnKeyUp(object sender, KeyEventArgs e)
