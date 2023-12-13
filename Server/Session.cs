@@ -2,6 +2,7 @@
 using PackageHelper;
 using ClientServerTransfer;
 using System.Diagnostics.Metrics;
+using System.Text;
 
 namespace Server
 {
@@ -12,13 +13,18 @@ namespace Server
         readonly Dictionary<Socket, string> _players = new(3);
         int _playersCount = 0;
 
-        public char[] Word { get; init; }
-        public string Riddle { get; init; }
-        public char[] GuessedLetters { get; init; }
+        public char[]? Word { get; init; }
+        public string? Riddle { get; init; }
+        public char[]? GuessedLetters { get; init; }
 
-        public Socket currentPlayer;
+        public Socket? currentPlayer;
 
-        public bool SessionIsFull => _playersCount >= 3;
+        public bool IsFull => _playersCount >= 3;
+
+        public Session(string sessionId)
+        {
+            SessionId = sessionId;
+        }
 
         public async Task AddPlayer(string name, Socket player)
         {
@@ -34,7 +40,7 @@ namespace Server
             {
                 foreach (var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(new SessionInfo { Riddle = this.Riddle, SessionId = this.SessionId, Word = this.Word, IsGuessed = false, IsWin = false}));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(new SessionInfo { Riddle = this.Riddle, SessionId = this.SessionId, Word = this.Word, IsGuessed = false, IsWin = false}));
                 }
             }
         }
@@ -45,11 +51,11 @@ namespace Server
             
             if (IsExistedPlayer(player))
             {
-                for(var i = 0; i < Word.Length; i++)
+                for(var i = 0; i < Word!.Length; i++)
                 {
                     if (Word[i].Equals(letter))
                     {
-                        GuessedLetters[i] = letter;
+                        GuessedLetters![i] = letter;
                         info.IsGuessed = true;
                         info.Word = GuessedLetters;
                     }
@@ -57,7 +63,7 @@ namespace Server
 
                 foreach(var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(info));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
                 }
             }
             else
@@ -72,11 +78,11 @@ namespace Server
 
             if (IsExistedPlayer(player))
             {
-                info.IsWin = Word.SequenceEqual(word);
+                info.IsWin = Word!.SequenceEqual(word);
 
                 foreach (var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(info));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
                 }
             }
             else
@@ -90,11 +96,11 @@ namespace Server
             return _players.ContainsKey(player);
         }
 
-        public async Task SendMessageToPlayers(Socket socket, string message)
+        public async Task SendMessageToPlayers(string message)
         {
             foreach (var p in _players.Keys)
             {
-                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(message));
+                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message));
             }
         }
     }

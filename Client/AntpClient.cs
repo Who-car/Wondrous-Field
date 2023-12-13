@@ -31,7 +31,7 @@ public class AntpClient
         try
         {
             await _socket.ConnectAsync("localhost", 5000);
-            var connection = await Serialiser.SerialiseToBytes(new ConnectionInfo
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
                 PlayerName = playerName, 
                 PlayerId = _clientId
@@ -52,7 +52,7 @@ public class AntpClient
                 throw new Exception("Couldn't create session. Try again later");
             var content = GetContent(buffer, bufferLength);
             _playerName = playerName;
-            return await Serialiser.Deserialise<ConnectionInfo>(content);
+            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content);
         }
         catch (Exception e)
         {
@@ -75,7 +75,7 @@ public class AntpClient
         try
         {
             await _socket.ConnectAsync("localhost", 5000);
-            var connection = await Serialiser.SerialiseToBytes(new ConnectionInfo()
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo()
             {
                 PlayerName = playerName, 
                 PlayerId = _clientId,
@@ -97,7 +97,7 @@ public class AntpClient
                 throw new Exception("Couldn't join session. Try again later");
             var content = GetContent(buffer, bufferLength);
             _playerName = playerName;
-            return await Serialiser.Deserialise<ConnectionInfo>(content);
+            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content);
         }
         catch (Exception e)
         {
@@ -126,11 +126,11 @@ public class AntpClient
             var content = GetContent(buffer, bufferLength);
 
             if (IsMessage(buffer))
-                MessageReceived.Invoke(await Serialiser.Deserialise<Message>(content));
+                MessageReceived.Invoke(await Serialiser.DeserialiseAsync<Message>(content));
 
             if (IsPost(buffer))
             {
-                var sessionInfo = await Serialiser.Deserialise<SessionInfo>(content);
+                var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content);
                 SessionInfo = sessionInfo;
                 if (_gameStarted)
                 {
@@ -149,7 +149,7 @@ public class AntpClient
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
-        var session = await Serialiser.SerialiseToBytes(new SessionInfo
+        var session = await Serialiser.SerialiseToBytesAsync(new SessionInfo
         {
             Letter = letter,
             LetterPosition = letterPosition,
@@ -170,7 +170,7 @@ public class AntpClient
             || !IsFull(buffer)
             || !IsPost(buffer))
             throw new Exception("Couldn't parse value. Try again later");
-        var content = await Serialiser.Deserialise<SessionInfo>(GetContent(buffer, bufferLength));
+        var content = await Serialiser.DeserialiseAsync<SessionInfo>(GetContent(buffer, bufferLength));
         if (content.IsWin)
             GameOver.Invoke(_playerName);
         return content.IsGuessed;
@@ -180,7 +180,7 @@ public class AntpClient
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
-        var session = await Serialiser.SerialiseToBytes(new SessionInfo
+        var session = await Serialiser.SerialiseToBytesAsync(new SessionInfo
         {
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
@@ -200,7 +200,7 @@ public class AntpClient
             || !IsFull(buffer)
             || !IsPost(buffer))
             throw new Exception("Couldn't parse value. Try again later");
-        var content = await Serialiser.Deserialise<SessionInfo>(GetContent(buffer, bufferLength));
+        var content = await Serialiser.DeserialiseAsync<SessionInfo>(GetContent(buffer, bufferLength));
         if (content.IsWin)
             GameOver.Invoke(_playerName);
         return content.IsGuessed;
@@ -210,7 +210,7 @@ public class AntpClient
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
-        var request = await Serialiser.SerialiseToBytes(new Message()
+        var request = await Serialiser.SerialiseToBytesAsync(new Message()
         {
             PlayerName = _playerName,
             SessionId = SessionInfo.SessionId,

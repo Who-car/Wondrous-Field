@@ -13,7 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientFrontend", "ClientFro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{F5D8B068-2B0E-4850-A1A7-46EF27FE4DFE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientServerTransfer", "ClientServerTransfer\ClientServerTransfer.csproj", "{CED78291-CDC3-4288-8D7B-EEAC90810758}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientServerTransfer", "ClientServerTransfer\ClientServerTransfer.csproj", "{CED78291-CDC3-4288-8D7B-EEAC90810758}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestClientImitation", "TestClientImitation\TestClientImitation.csproj", "{12C28B97-00D2-4546-A66F-9544D5500C74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CED78291-CDC3-4288-8D7B-EEAC90810758}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12C28B97-00D2-4546-A66F-9544D5500C74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12C28B97-00D2-4546-A66F-9544D5500C74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12C28B97-00D2-4546-A66F-9544D5500C74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12C28B97-00D2-4546-A66F-9544D5500C74}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

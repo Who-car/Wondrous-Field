@@ -26,7 +26,7 @@
 
         public PackageBuilder SetCommand(byte[] command)
         {
-            for (var i = 0; i < Package.CommandEnd - Package.CommandStart; i++)
+            for (var i = 0; i < Package.CommandEnd - Package.CommandStart + 1; i++)
             {
                 _package[Package.CommandStart + i] = command[i];
             }

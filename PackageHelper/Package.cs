@@ -59,7 +59,7 @@ namespace PackageHelper
 
         public static byte[] GetCommand(byte[] package)
         {
-            return package.Take(new Range(CommandStart, CommandEnd)).ToArray();
+            return package.Take(new Range(CommandStart, CommandEnd + 1)).ToArray();
         }
 
         public static byte[] CreatePackage(byte[] content, byte[] command, PackageFullness fullness, QueryType query)
@@ -88,7 +88,7 @@ namespace PackageHelper
                     {
                         fullness = PackageFullness.Full;
                     }
-                    packages.Add(CreatePackage(content, command, fullness, query));
+                    packages.Add(CreatePackage(chunks[i], command, fullness, query));
                 }
             }
             else
@@ -206,6 +206,17 @@ namespace PackageHelper
             {
                 await socket.SendAsync(package, SocketFlags.None);
             }
+        }
+
+        public static async Task SendContentToSocket(Socket socket, byte[] content, byte[] command, QueryType queryType)
+        {
+            if (socket.Connected)
+            {
+                var packages = GetPackages(content, command, queryType);
+
+                foreach (var p in packages) await socket.SendAsync(p, SocketFlags.None);
+            }
+            else throw new Exception();
         }
     }
 }
