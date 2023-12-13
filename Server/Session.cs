@@ -2,6 +2,7 @@
 using PackageHelper;
 using ClientServerTransfer;
 using System.Diagnostics.Metrics;
+using System.Text;
 
 namespace Server
 {
@@ -18,7 +19,12 @@ namespace Server
 
         public Socket currentPlayer;
 
-        public bool SessionIsFull => _playersCount >= 3;
+        public bool IsFull => _playersCount >= 3;
+
+        public Session(string sessionId)
+        {
+            SessionId = sessionId;
+        }
 
         public async Task AddPlayer(string name, Socket player)
         {
