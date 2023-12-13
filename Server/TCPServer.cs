@@ -57,12 +57,15 @@ namespace Server
             try
             {
                 var query = await Package.GetFullContent(socket);
-
-                if (query.Command!.Equals(Command.CreateSession))
+                if (!query.Command!.SequenceEqual(Command.CreateSession) && !query.Command.SequenceEqual(Command.Join))
+                {
+                    throw new Exception();
+                }
+                else if (query.Command!.SequenceEqual(Command.CreateSession))
                 {
                     await CreateSession(Encoding.UTF8.GetString(query.Body!), socket);
                 }
-                else if (query.Command.Equals(Command.Join))
+                else if (query.Command.SequenceEqual(Command.Join))
                 {
                     await JoinToSession(Encoding.UTF8.GetString(query.Body!), socket, "");
                 }
@@ -86,7 +89,7 @@ namespace Server
 
                 if (query.Command!.Equals(Command.NameTheLetter))
                 {
-                    var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
+                    var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(query.Body!);
                     if(_inGameProcessSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _inGameProcessSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
@@ -94,7 +97,7 @@ namespace Server
                 }
                 else if (query.Command!.Equals(Command.NameTheWord))
                 {
-                    var sessionInfo = await Serialiser.Deserialise<SessionInfo>(query.Body!);
+                    var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(query.Body!);
                     if (_inGameProcessSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _inGameProcessSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
@@ -106,7 +109,7 @@ namespace Server
                 }
                 else if (query.Command!.Equals(Command.SendMessage))
                 {
-                    var messageInfo = await Serialiser.Deserialise<Message>(query.Body!);
+                    var messageInfo = await Serialiser.DeserialiseAsync<Message>(query.Body!);
                     if (_inGameProcessSessions.ContainsKey(messageInfo.SessionId!))
                     {
                         await _inGameProcessSessions[messageInfo.SessionId!].SendMessageToPlayers(socket, messageInfo.Content);
@@ -132,7 +135,7 @@ namespace Server
                 Session session = new();
                 await session.AddPlayer(name, player);
                 _privateSessions.Add(session.SessionId, session);
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
 
                 return true;
             }
@@ -151,7 +154,7 @@ namespace Server
                     if (_privateSessions.ContainsKey(sessionId))
                     {
                         await _privateSessions[sessionId].AddPlayer(name, player);
-                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
+                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = "", IsSuccessfulJoin = true }));
                     }
                 }
                 else
@@ -160,7 +163,7 @@ namespace Server
                     if (session == null) session = new Session();
                     await session.AddPlayer(name, player);
                     _openSessions[session.SessionId] = session;
-                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytes(new ConnectionInfo { IsSuccessfulJoin = true }));
+                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { IsSuccessfulJoin = true }));
                 }
 
                 return true;

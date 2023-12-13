@@ -34,7 +34,7 @@ namespace Server
             {
                 foreach (var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(new SessionInfo { Riddle = this.Riddle, SessionId = this.SessionId, Word = this.Word, IsGuessed = false, IsWin = false}));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(new SessionInfo { Riddle = this.Riddle, SessionId = this.SessionId, Word = this.Word, IsGuessed = false, IsWin = false}));
                 }
             }
         }
@@ -57,7 +57,7 @@ namespace Server
 
                 foreach(var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(info));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
                 }
             }
             else
@@ -76,7 +76,7 @@ namespace Server
 
                 foreach (var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(info));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
                 }
             }
             else
@@ -94,7 +94,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytes(message));
+                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message));
             }
         }
     }
