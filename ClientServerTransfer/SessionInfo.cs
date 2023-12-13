@@ -10,6 +10,6 @@
         public bool IsGuessed { get; set; }
         public bool IsWin { get; set; }
         public string? CurrentPlayer { get; set; }
-        public string[] Players { get; set; } = new string[3];
+        public string[]? Players { get; set; }
     }
 }

@@ -57,7 +57,7 @@ namespace Server
             try
             {
                 var received = await Package.GetFullContent(socket);
-                if (!received.Command!.SequenceEqual(Command.CreateSession) && !received.Command.SequenceEqual(Command.Join))
+                if (!received.Command!.SequenceEqual(Command.CreateSession) && !received.Command!.SequenceEqual(Command.Join))
                 {
                     throw new Exception("Unexpected command");
                 }
@@ -65,7 +65,7 @@ namespace Server
                 {
                     await CreateSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket);
                 }
-                else if (received.Command.SequenceEqual(Command.Join))
+                else if (received.Command!.SequenceEqual(Command.Join))
                 {
                     await JoinToSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket);
                 }
