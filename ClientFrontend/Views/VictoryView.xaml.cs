@@ -6,13 +6,19 @@ namespace ClientFrontend.Views;
 
 public partial class VictoryView : Page
 {
-    public VictoryView()
+    private Frame _mainFrame;
+    public string WinnerText { get; set; }
+    public VictoryView(Frame mainFrame, string winner)
     {
         InitializeComponent();
+        DataContext = this;
+
+        _mainFrame = mainFrame;
+        WinnerText = $"{winner.ToUpper()} ВЫИГРАЛ";
     }
 
     private void StartNewGame(object sender, RoutedEventArgs e)
     {
-        Console.WriteLine("Someone wants to start new game again!");
+        _mainFrame.Navigate(new WelcomeView(_mainFrame));
     }
 }
