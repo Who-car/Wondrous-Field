@@ -20,6 +20,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <TextBlock 
                 Grid.Row="0"
@@ -60,8 +61,41 @@
                 Click="OpenWord">
                 открыть слово
             </Button>
+            <Image Grid.Row="1" x:Name="RotateImage" 
+                   Visibility="Collapsed"
+                   Width="512" 
+                   Height="512" 
+                   VerticalAlignment="Center" 
+                   HorizontalAlignment="Center" 
+                   Source="/Resources/Icons/wheel.png">
+                <Image.RenderTransform>
+                    <RotateTransform Angle="0" CenterX="256" CenterY="256"/>
+                </Image.RenderTransform>
+            </Image>
+            <Button 
+                Grid.Row="4" 
+                Style="{DynamicResource RoundButton}"
+                Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Click="ButtonBase_OnClick">
+                барабан!
+                <Button.Triggers>
+                    <EventTrigger RoutedEvent="Button.Click">
+                        <BeginStoryboard>
+                            <Storyboard Duration="00:00:10.000">
+                                <DoubleAnimation Storyboard.TargetName="RotateImage"
+                                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                                 From="0" To="720" Duration="00:00:03.000">
+                                    <DoubleAnimation.EasingFunction>
+                                        <QuadraticEase EasingMode="EaseInOut"></QuadraticEase>
+                                    </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Button.Triggers>
+            </Button>
             <TextBlock 
-                Grid.Row="4"
+                Grid.Row="5"
                 Style="{StaticResource PlainText}"
                 Text="{Binding Info}">
             </TextBlock>

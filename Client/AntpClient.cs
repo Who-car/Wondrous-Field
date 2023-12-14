@@ -60,7 +60,6 @@ public class AntpClient
         }
         finally
         {
-            // TODO: как работает getAwaiter? Может надо просто запускать бэкграунд таск
             Task.Run(Listen).ConfigureAwait(false);
         }
     }
