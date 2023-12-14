@@ -81,7 +81,6 @@ namespace Server
                 }
                 else if (Package.IsJoin(received.Command!))
                 {
-                    Console.WriteLine(Encoding.UTF8.GetString(received.Body!));
                     await JoinToSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket).ConfigureAwait(false);
                 }
 

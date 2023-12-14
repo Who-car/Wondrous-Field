@@ -205,7 +205,8 @@ namespace PackageHelper
 
             foreach (var package in packages)
             {
-                await socket.SendAsync(package, SocketFlags.None);
+                Console.WriteLine($"Send: { Encoding.UTF8.GetString(package)}");
+                await socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
             }
         }
 
