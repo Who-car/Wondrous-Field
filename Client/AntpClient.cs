@@ -71,7 +71,8 @@ public class AntpClient
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo()
             {
                 PlayerInfo = new Player { Name = playerName, Id = _clientId },
-                SessionId = sessionId
+                SessionId = sessionId,
+                IsRandomJoin = false
             });
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(Join)
