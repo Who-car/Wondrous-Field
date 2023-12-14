@@ -21,12 +21,14 @@ namespace Server
         public bool IsInProcess { get; set; }
 
         public Socket? currentPlayer;
+        readonly TCPServer _server;
 
         public bool IsFull => _playersCount >= 3;
 
-        public Session(string sessionId)
+        public Session(string sessionId, TCPServer server)
         {
             SessionId = sessionId;
+            _server = server;
         }
 
         public async Task StopGame()
@@ -69,6 +71,7 @@ namespace Server
                         IsWin = false,
                         Players = _players.Values.ToArray()
                     }));
+                    await NotifyServerAboutStartingGame();
                 }
                 sem.Release();
                 return true;
@@ -160,6 +163,11 @@ namespace Server
             {
                 if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message)).ConfigureAwait(false);
             }
+        }
+
+        async Task NotifyServerAboutStartingGame()
+        {
+            await _server.MoveSessionToProcessingSessions(SessionId);
         }
     }
 }

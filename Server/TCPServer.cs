@@ -13,6 +13,22 @@ namespace Server
         readonly Dictionary<string, Session> _waitingSessions;
         readonly Dictionary<string, Session> _processingSessions;
 
+        internal async Task MoveSessionToProcessingSessions(string sessionId)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    _processingSessions[sessionId] = _waitingSessions[sessionId];
+                    _waitingSessions.Remove(sessionId);
+                });
+            }
+            catch
+            {
+
+            }
+        }
+
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -124,7 +140,7 @@ namespace Server
         {
             try
             {
-                Session session = new(CreateId(5));
+                Session session = new(CreateId(5), this);
                 await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
                 await session.AddPlayer(connectionInfo.PlayerName!, player).ConfigureAwait(false);
                 _waitingSessions.Add(session.SessionId, session);
