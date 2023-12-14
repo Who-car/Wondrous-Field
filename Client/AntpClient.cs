@@ -33,7 +33,7 @@ public class AntpClient
     {
         try
         {
-            await _socket.ConnectAsync(_ip, _port);
+            await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
                 PlayerName = playerName, 
@@ -46,16 +46,9 @@ public class AntpClient
                 .SetContent(connection)
                 .Build();
             await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
-            var buffer = new byte[MaxPackageSize];
-            var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
-            if (!IsPackageValid(buffer, bufferLength)
-                || !IsResponse(buffer)
-                || !IsFull(buffer)
-                || !IsCreateSession(buffer))
-                throw new Exception("Couldn't create session. Try again later");
-            var content = GetContent(buffer, bufferLength);
+            var content = await GetFullContent(_socket).ConfigureAwait(false);
             _playerName = playerName;
-            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content).ConfigureAwait(false);
+            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -68,7 +61,7 @@ public class AntpClient
         finally
         {
             // TODO: как работает getAwaiter? Может надо просто запускать бэкграунд таск
-            var listenTask = Listen();
+            var listenTask = Listen().ConfigureAwait(false);
             listenTask.GetAwaiter().GetResult();
         }
     }
@@ -91,16 +84,9 @@ public class AntpClient
                 .SetContent(connection)
                 .Build();
             await _socket.SendAsync(package, SocketFlags.None);
-            var buffer = new byte[MaxPackageSize];
-            var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
-            if (!IsPackageValid(buffer, bufferLength)
-                || !IsResponse(buffer)
-                || !IsFull(buffer)
-                || !IsJoin(buffer))
-                throw new Exception("Couldn't join session. Try again later");
-            var content = GetContent(buffer, bufferLength);
+            var content = await GetFullContent(_socket).ConfigureAwait(false);
             _playerName = playerName;
-            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content);
+            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!);
         }
         catch (Exception e)
         {

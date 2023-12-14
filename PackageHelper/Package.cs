@@ -41,7 +41,7 @@ namespace PackageHelper
 
             while (socket.Connected)
             {
-                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
+                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
                 Console.WriteLine(Encoding.UTF8.GetString(buffer));
                 if (!IsPackageValid(buffer, packageLength)) throw new Exception();
 
@@ -129,7 +129,7 @@ namespace PackageHelper
         public static bool HasSeparators(byte[] package)
         {
             return package[SecondSeparatorIndex].Equals(Separator)
-                || package[ThirdSeparatorIndex].Equals(Separator);
+                && package[ThirdSeparatorIndex].Equals(Separator);
         }
 
         public static bool HasFullness(byte[] package)
@@ -215,7 +215,7 @@ namespace PackageHelper
             {
                 var packages = GetPackages(content, command, queryType);
 
-                foreach (var p in packages) await socket.SendAsync(p, SocketFlags.None);
+                foreach (var p in packages) await socket.SendAsync(p, SocketFlags.None).ConfigureAwait(false);
             }
             else throw new Exception();
         }
