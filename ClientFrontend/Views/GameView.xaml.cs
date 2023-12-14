@@ -22,9 +22,10 @@ public partial class GameView : Page, INotifyPropertyChanged
     private bool _isTurn;
     private bool _answerGiven;
     private string _info;
-    private int _angle;
+    private double _angle;
     private ObservableCollection<CellContent> _copy;
     private AntpClient _client;
+    private string _question;
     public bool HasChosen => !LetterChosen && !WordChosen && !IsTurn && !AnswerGiven;
 
     public bool LetterChosen
@@ -66,12 +67,17 @@ public partial class GameView : Page, INotifyPropertyChanged
         set => SetField(ref _info, value);
     }
 
-    public int TargetAngle
+    public double TargetAngle
     {
         get => _angle;
         set => SetField(ref _angle, value);
     }
-    public string Question { get; set; }
+    public string Question 
+    { 
+        get => _question; 
+        set => SetField(ref _question, value); 
+    }
+    
     private ObservableCollection<CellContent> WordLetters;
     public ObservableCollection<Message> Messages = new();
     public GameView(Frame mainFrame, AntpClient client)
@@ -128,9 +134,14 @@ public partial class GameView : Page, INotifyPropertyChanged
         if (LetterChosen)
         {
             var letter = (sender as TextBox)!.Text.ToCharArray()[0];
-            if (await _client.CheckLetter(letter, 0))
+            var response = await _client.CheckLetter(letter);
+            if (response.IsGuessed)
             {
                 Info = "Вы угадали! Партия довольна тобой, держи риску миса и кошко-жена";
+                for (int i = 0; i < WordLetters.Count; i++)
+                {
+                    WordLetters[i].Text = response.Word![i].ToString();
+                }
             }
             else
             {
@@ -215,7 +226,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         Application.Current.Dispatcher.Invoke(async () =>
         {
             var num = new Random().Next(0, 8);
-            TargetAngle = 1080 + num * 45;
+            TargetAngle = 1080 + num * 45 - 22.5;
             RotateImage.Visibility = Visibility.Visible;
             await Task.Delay(5*1000);
             RotateImage.Visibility = Visibility.Collapsed;

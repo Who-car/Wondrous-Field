@@ -65,7 +65,11 @@ public class AntpClient
         {
             await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
             _player.Name = playerName;
-            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player}).ConfigureAwait(false);
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+            {
+                PlayerInfo = _player,
+                SessionId = sessionId
+            }).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(Join)
                 .SetFullness(Full)
@@ -113,35 +117,24 @@ public class AntpClient
         } while (_socket.Connected);
     }
 
-    public async Task<bool> CheckLetter(char letter, short letterPosition)
+    public async Task<SessionInfo> CheckLetter(char letter)
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
         var session = await Serialiser.SerialiseToBytesAsync(new SessionInfo
         {
             Letter = letter,
-            LetterPosition = letterPosition,
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player
         });
-        var package = new PackageBuilder(session.Length)
-            .SetCommand(NameTheLetter)
-            .SetFullness(Full)
-            .SetQueryType(Request)
-            .SetContent(session)
-            .Build();
-        await _socket.SendAsync(package, SocketFlags.None);
-        var buffer = new byte[MaxPackageSize];
-        var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
-        if (!IsPackageValid(buffer, bufferLength)
-            || !IsResponse(buffer)
-            || !IsFull(buffer)
-            || !IsPost(buffer))
-            throw new Exception("Couldn't parse value. Try again later");
-        var content = await Serialiser.DeserialiseAsync<SessionInfo>(GetContent(buffer, bufferLength));
+        var packages = GetPackages(session, NameTheLetter, Request);
+        foreach (var package in packages)
+            await _socket.SendAsync(package, SocketFlags.None);
+        var response = await GetFullContent(_socket).ConfigureAwait(false);
+        var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
         if (content.IsWin)
             GameOver.Invoke(_player.Name);
-        return content.IsGuessed;
+        return content;
     }
     
     public async Task<bool> CheckWord(string word)
@@ -154,21 +147,11 @@ public class AntpClient
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player 
         });
-        var package = new PackageBuilder(session.Length)
-            .SetCommand(NameTheWord)
-            .SetFullness(Full)
-            .SetQueryType(Request)
-            .SetContent(session)
-            .Build();
-        await _socket.SendAsync(package, SocketFlags.None);
-        var buffer = new byte[MaxPackageSize];
-        var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
-        if (!IsPackageValid(buffer, bufferLength)
-            || !IsResponse(buffer)
-            || !IsFull(buffer)
-            || !IsPost(buffer))
-            throw new Exception("Couldn't parse value. Try again later");
-        var content = await Serialiser.DeserialiseAsync<SessionInfo>(GetContent(buffer, bufferLength));
+        var packages = GetPackages(session, NameTheWord, Request);
+        foreach (var package in packages)
+            await _socket.SendAsync(package, SocketFlags.None);
+        var response = await GetFullContent(_socket).ConfigureAwait(false);
+        var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
         if (content.IsWin)
             GameOver.Invoke(_player.Name);
         return content.IsGuessed;

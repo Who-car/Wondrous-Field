@@ -3,6 +3,8 @@ using PackageHelper;
 using ClientServerTransfer;
 using System.Diagnostics.Metrics;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Server
 {
@@ -34,8 +36,24 @@ namespace Server
 
         async Task GenerateRiddle()
         {
-            Word = new char[3];
-            Riddle = "";
+            var json = await File.ReadAllTextAsync("riddles.json");
+
+            using var document = JsonDocument.Parse(json);
+            var root = document.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Array)
+                throw new InvalidOperationException("JSON must be an array.");
+
+            var count = root.GetArrayLength();
+            if (count == 0)
+                throw new InvalidOperationException("JSON array is empty.");
+
+            var random = new Random();
+            var randomIndex = random.Next(count);
+
+            var randomItem = root[randomIndex];
+            Riddle = randomItem.GetProperty("Riddle").GetString()!;
+            Word = randomItem.GetProperty("Word").GetString()!.ToCharArray();
         }
 
         public async Task StopGame()
