@@ -19,7 +19,7 @@ public class AntpClient
     private string _playerName;
     private bool _gameStarted;
     public SessionInfo SessionInfo { get; set; }
-    public bool IsTurn => _clientId == SessionInfo.CurrentPlayerId;
+    public bool IsTurn => _clientId == SessionInfo.CurrentPlayer.Id;
     public delegate void MessageHandler(Message message);
     public delegate void SessionHandler(SessionInfo connectionInfo);
     public delegate void WinHandler(string winner);
@@ -36,8 +36,7 @@ public class AntpClient
             await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
-                PlayerName = playerName, 
-                PlayerId = _clientId
+                PlayerInfo = new Player { Name = playerName, Id = _clientId} 
             }).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(CreateSession)
@@ -71,8 +70,7 @@ public class AntpClient
             await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo()
             {
-                PlayerName = playerName,
-                PlayerId = _clientId,
+                PlayerInfo = new Player { Name = playerName, Id = _clientId },
                 SessionId = sessionId
             });
             var package = new PackageBuilder(connection.Length)
@@ -132,7 +130,7 @@ public class AntpClient
             Letter = letter,
             LetterPosition = letterPosition,
             SessionId = SessionInfo.SessionId,
-            CurrentPlayerId = _clientId
+            CurrentPlayer = new Player { Id = _clientId}
         });
         var package = new PackageBuilder(session.Length)
             .SetCommand(NameTheLetter)
@@ -162,7 +160,7 @@ public class AntpClient
         {
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
-            CurrentPlayerId = _clientId
+            CurrentPlayer = new Player { Id = _clientId }
         });
         var package = new PackageBuilder(session.Length)
             .SetCommand(NameTheWord)
