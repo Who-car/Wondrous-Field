@@ -14,14 +14,15 @@ namespace Server
         int _playersCount = 0;
         readonly Semaphore sem = new(1, 1);
 
-        public char[]? Word { get; init; }
-        public string? Riddle { get; init; }
-        public char[]? GuessedLetters { get; init; }
+        public char[]? Word { get; set; }
+        public string? Riddle { get; set; }
+        public char[]? GuessedLetters { get; set; }
         public bool IsPrivate { get; init; }
         public bool IsInProcess { get; set; }
 
-        public Socket? currentPlayer;
+        Socket? _currentPlayer;
         readonly TCPServer _server;
+        int _currentPlayerIndex = 0;
 
         public bool IsFull => _playersCount >= 3;
 
@@ -29,6 +30,12 @@ namespace Server
         {
             SessionId = sessionId;
             _server = server;
+        }
+
+        async Task GenerateRiddle()
+        {
+            Word = new char[3];
+            Riddle = "";
         }
 
         public async Task StopGame()
@@ -59,9 +66,10 @@ namespace Server
                 _players[player] = playerInfo;
                 Interlocked.Increment(ref _playersCount);
 
-                if (_playersCount >= 3)
+                if (IsFull)
                 {
                     IsInProcess = true;
+                    await GenerateRiddle();
                     await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(new SessionInfo
                     {
                         Riddle = this.Riddle,
@@ -104,11 +112,33 @@ namespace Server
             }
         }
 
+        Player NextPlayer()
+        {
+            _currentPlayerIndex++;
+            if(_currentPlayerIndex >= _playersCount)
+            {
+                _currentPlayerIndex = 0;
+            }
+
+            int i = 0;
+            foreach(var p in _players)
+            {
+                if(i == _currentPlayerIndex)
+                {
+                    _currentPlayer = p.Key;
+                    return p.Value;
+                }
+                i++;
+            }
+
+            return default!;
+        }
+
         public async Task NameTheLetter(Socket player, char letter)
         {
             var info = new SessionInfo();
             
-            if (IsExistedPlayer(player))
+            if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
             {
                 for(var i = 0; i < Word!.Length; i++)
                 {
@@ -122,9 +152,16 @@ namespace Server
 
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
 
+                info.CurrentPlayer = NextPlayer();
+
                 foreach(var p in _players.Keys)
                 {
                     await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
+                }
+
+                if(info.IsWin)
+                {
+                    await StopGame();
                 }
             }
             else
@@ -141,9 +178,16 @@ namespace Server
             {
                 info.IsWin = Word!.SequenceEqual(word);
 
+                info.CurrentPlayer = NextPlayer();
+
                 foreach (var p in _players.Keys)
                 {
                     await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
+                }
+
+                if (info.IsWin)
+                {
+                    await StopGame();
                 }
             }
             else
