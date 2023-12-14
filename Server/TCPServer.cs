@@ -122,7 +122,7 @@ namespace Server
                     var messageInfo = await Serialiser.DeserialiseAsync<Message>(received.Body!);
                     if (_processingSessions.ContainsKey(messageInfo.SessionId!))
                     {
-                        await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo.Content!, socket).ConfigureAwait(false);
+                        await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo, socket).ConfigureAwait(false);
                     }
                     /*else
                     {

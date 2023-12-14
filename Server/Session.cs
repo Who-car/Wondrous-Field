@@ -157,7 +157,7 @@ namespace Server
             return _players.ContainsKey(player);
         }
 
-        public async Task SendMessageToPlayers(string message, Socket sender)
+        public async Task SendMessageToPlayers(Message message, Socket sender)
         {
             foreach (var p in _players.Keys)
             {
