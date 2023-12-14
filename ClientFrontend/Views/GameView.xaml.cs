@@ -26,7 +26,7 @@ public partial class GameView : Page, INotifyPropertyChanged
     private ObservableCollection<CellContent> _copy;
     private AntpClient _client;
     private string _question;
-    public bool HasChosen => !LetterChosen && !WordChosen && !IsTurn && !AnswerGiven;
+    public bool HasChosen => !LetterChosen && !WordChosen && IsTurn && !AnswerGiven;
 
     public bool LetterChosen
     {
@@ -58,7 +58,11 @@ public partial class GameView : Page, INotifyPropertyChanged
     public bool IsTurn
     {
         get => _isTurn;
-        set => SetField(ref _isTurn, value);
+        set 
+        {
+            SetField(ref _isTurn, value);
+            OnPropertyChanged(nameof(HasChosen));
+        }
     }
 
     public string Info
@@ -89,7 +93,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         _client = client;
         var letterNum = client.SessionInfo.Word?.Length ?? 5;
         WordLetters = new ObservableCollection<CellContent>(Enumerable.Range(0, letterNum).Select(_ => new CellContent()));
-        Question = client.SessionInfo.Riddle ?? "Default Riddle";
+        Question = client.Player.Id.ToString() ?? "Default Riddle";
 
         _client.MessageReceived += message =>
             Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.Player.Name, Text = message.Content }));
@@ -128,13 +132,12 @@ public partial class GameView : Page, INotifyPropertyChanged
         Info = "Впишите букву";
     }
     
-    // TODO: замена TextBox на TextBlock
     private async void TextBox_OnTextInput(object sender, RoutedEventArgs e)
     {
         if (LetterChosen)
         {
             var letter = (sender as TextBox)!.Text.ToCharArray()[0];
-            var response = await _client.CheckLetter(letter);
+            var response = await _client.CheckLetter(letter).ConfigureAwait(false);
             if (response.IsGuessed)
             {
                 Info = "Вы угадали! Партия довольна тобой, держи риску миса и кошко-жена";

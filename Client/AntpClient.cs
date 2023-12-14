@@ -14,6 +14,7 @@ public class AntpClient
 {
     private readonly Socket _socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private readonly Player _player = new Player() {Id = Guid.NewGuid()};
+    public Player Player => _player;
     private readonly IPAddress _ip = new IPAddress(new byte[] { 127, 0, 0, 1 });
     private readonly int _port = 5051;
     private bool _gameStarted;
@@ -131,7 +132,7 @@ public class AntpClient
         });
         var packages = GetPackages(session, NameTheLetter, Request);
         foreach (var package in packages)
-            await _socket.SendAsync(package, SocketFlags.None);
+            await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
         var response = await GetFullContent(_socket).ConfigureAwait(false);
         var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
         if (content.IsWin)
@@ -148,7 +149,7 @@ public class AntpClient
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player 
-        });
+        }).ConfigureAwait(false);
         var packages = GetPackages(session, NameTheWord, Request);
         foreach (var package in packages)
             await _socket.SendAsync(package, SocketFlags.None);

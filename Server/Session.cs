@@ -96,7 +96,7 @@ namespace Server
                         Word = this.Word,
                         IsGuessed = false,
                         IsWin = false,
-                        CurrentPlayer = _players.First().Value
+                        CurrentPlayer = _players.Last().Value
                     }));
                     await NotifyServerAboutStartingGame();
                     _currentPlayer = player;
