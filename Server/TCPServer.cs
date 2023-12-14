@@ -97,13 +97,14 @@ namespace Server
         async Task ListenSocketInLoopAsync(Socket socket)
         {
             ReceivedData received;
-
+            string sessionId = "";
             while (socket.Connected)
             {
                 received = await Package.GetFullContent(socket).ConfigureAwait(false);
                 if (Package.IsNameLetter(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
+                    sessionId = sessionInfo.SessionId;
                     if(_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _processingSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter).ConfigureAwait(false);
@@ -112,6 +113,7 @@ namespace Server
                 else if (Package.IsNameWord(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
+                    sessionId = sessionInfo.SessionId;
                     if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!).ConfigureAwait(false);
@@ -120,6 +122,7 @@ namespace Server
                 else if (Package.IsMessage(received.Command!))
                 {
                     var messageInfo = await Serialiser.DeserialiseAsync<Message>(received.Body!);
+                    sessionId = messageInfo.SessionId;
                     if (_processingSessions.ContainsKey(messageInfo.SessionId!))
                     {
                         await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo, socket).ConfigureAwait(false);
@@ -133,6 +136,11 @@ namespace Server
                 {
                     await socket.DisconnectAsync(false).ConfigureAwait(false);
                 }
+            }
+
+            if(_processingSessions.ContainsKey(sessionId))
+            {
+                await _processingSessions[sessionId].RemovePlayer(socket).ConfigureAwait(false);
             }
         }
 

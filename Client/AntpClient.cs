@@ -68,8 +68,10 @@ public class AntpClient
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
                 PlayerInfo = _player,
-                SessionId = sessionId
+                SessionId = sessionId,
+                IsRandomJoin = false
             }).ConfigureAwait(false);
+
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(Join)
                 .SetFullness(Full)
@@ -162,8 +164,8 @@ public class AntpClient
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
         var request = await Serialiser.SerialiseToBytesAsync(new Message()
-        {
-            PlayerName = _player.Name,
+        { 
+            Player = _player,
             SessionId = SessionInfo.SessionId,
             Content = message
         });
