@@ -13,13 +13,12 @@ namespace Client;
 public class AntpClient 
 {
     private readonly Socket _socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-    private readonly Guid _clientId = Guid.NewGuid();
+    private readonly Player _player = new Player() {Id = Guid.NewGuid()};
     private readonly IPAddress _ip = new IPAddress(new byte[] { 127, 0, 0, 1 });
     private readonly int _port = 5051;
-    private string _playerName;
     private bool _gameStarted;
     public SessionInfo SessionInfo { get; set; }
-    public bool IsTurn => _clientId == SessionInfo.CurrentPlayerId;
+    public bool IsTurn => _player.Id == SessionInfo.CurrentPlayer.Id;
     public delegate void MessageHandler(Message message);
     public delegate void SessionHandler(SessionInfo connectionInfo);
     public delegate void WinHandler(string winner);
@@ -34,11 +33,8 @@ public class AntpClient
         try
         {
             await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
-            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
-            {
-                PlayerName = playerName, 
-                PlayerId = _clientId
-            }).ConfigureAwait(false);
+            _player.Name = playerName;
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player }).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(CreateSession)
                 .SetFullness(Full)
@@ -47,7 +43,6 @@ public class AntpClient
                 .Build();
             await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
             var content = await GetFullContent(_socket).ConfigureAwait(false);
-            _playerName = playerName;
             return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!).ConfigureAwait(false);
         }
         catch (Exception e)
@@ -69,12 +64,12 @@ public class AntpClient
         try
         {
             await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
-            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo()
+            _player.Name = playerName;
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
-                PlayerName = playerName,
-                PlayerId = _clientId,
+                PlayerInfo = _player,
                 SessionId = sessionId
-            });
+            }).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(Join)
                 .SetFullness(Full)
@@ -83,7 +78,6 @@ public class AntpClient
                 .Build();
             await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
             var content = await GetFullContent(_socket).ConfigureAwait(false);
-            _playerName = playerName;
             return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!);
         }
         catch (Exception e)
@@ -132,7 +126,7 @@ public class AntpClient
             Letter = letter,
             LetterPosition = letterPosition,
             SessionId = SessionInfo.SessionId,
-            CurrentPlayerId = _clientId
+            CurrentPlayer = _player
         });
         var package = new PackageBuilder(session.Length)
             .SetCommand(NameTheLetter)
@@ -150,7 +144,7 @@ public class AntpClient
             throw new Exception("Couldn't parse value. Try again later");
         var content = await Serialiser.DeserialiseAsync<SessionInfo>(GetContent(buffer, bufferLength));
         if (content.IsWin)
-            GameOver.Invoke(_playerName);
+            GameOver.Invoke(_player.Name);
         return content.IsGuessed;
     }
     
@@ -162,7 +156,7 @@ public class AntpClient
         {
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
-            CurrentPlayerId = _clientId
+            CurrentPlayer = _player
         });
         var package = new PackageBuilder(session.Length)
             .SetCommand(NameTheWord)
@@ -180,7 +174,7 @@ public class AntpClient
             throw new Exception("Couldn't parse value. Try again later");
         var content = await Serialiser.DeserialiseAsync<SessionInfo>(GetContent(buffer, bufferLength));
         if (content.IsWin)
-            GameOver.Invoke(_playerName);
+            GameOver.Invoke(_player.Name);
         return content.IsGuessed;
     }
     
@@ -190,7 +184,7 @@ public class AntpClient
             throw new ChannelClosedException("Internet connection error");
         var request = await Serialiser.SerialiseToBytesAsync(new Message()
         {
-            PlayerName = _playerName,
+            PlayerName = _player.Name,
             SessionId = SessionInfo.SessionId,
             Content = message
         });

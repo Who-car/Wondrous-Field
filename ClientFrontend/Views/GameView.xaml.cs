@@ -22,6 +22,7 @@ public partial class GameView : Page, INotifyPropertyChanged
     private bool _isTurn;
     private bool _answerGiven;
     private string _info;
+    private int _angle;
     private ObservableCollection<CellContent> _copy;
     private AntpClient _client;
     public bool HasChosen => !LetterChosen && !WordChosen && !IsTurn && !AnswerGiven;
@@ -65,6 +66,11 @@ public partial class GameView : Page, INotifyPropertyChanged
         set => SetField(ref _info, value);
     }
 
+    public int TargetAngle
+    {
+        get => _angle;
+        set => SetField(ref _angle, value);
+    }
     public string Question { get; set; }
     private ObservableCollection<CellContent> WordLetters;
     public ObservableCollection<Message> Messages = new();
@@ -208,8 +214,10 @@ public partial class GameView : Page, INotifyPropertyChanged
     {
         Application.Current.Dispatcher.Invoke(async () =>
         {
+            var num = new Random().Next(0, 8);
+            TargetAngle = 1080 + num * 45;
             RotateImage.Visibility = Visibility.Visible;
-            await Task.Delay(10 * 1000);
+            await Task.Delay(5*1000);
             RotateImage.Visibility = Visibility.Collapsed;
         });
     }

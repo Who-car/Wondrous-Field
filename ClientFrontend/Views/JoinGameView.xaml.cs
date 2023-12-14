@@ -50,7 +50,8 @@ public partial class JoinGameView : Page
                 ? "Вы успешно присоединились\nОжидайте подключения других игроков"
                 : "Неверный код\nПопробуйте ещё раз");
             if (!connection.IsSuccessfulJoin)
-                SecretCode.Clear();
+                foreach (var cell in SecretCode)
+                    cell.Text = "";
         }
         else
         {
