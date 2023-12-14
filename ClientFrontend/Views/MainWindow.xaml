@@ -9,4 +9,37 @@
     <Grid>
         <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
     </Grid>
+    <!-- <Window.Resources> -->
+    <!--     <Storyboard x:Key="Storyboard" Duration="00:00:10.000"> -->
+    <!--         <DoubleAnimation Storyboard.TargetName="RotateImage"  -->
+    <!--                          Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"  -->
+    <!--                          From="0" To="720" Duration="00:00:03.000" /> -->
+    <!--         <DoubleAnimation Storyboard.TargetName="OpacityImage"  -->
+    <!--                          Storyboard.TargetProperty="Opacity"  -->
+    <!--                          From="1" To="0" Duration="00:00:10.000" /> -->
+    <!--     </Storyboard> -->
+    <!-- </Window.Resources> -->
+    <!-- <Grid> -->
+    <!--     <Grid.RowDefinitions> -->
+    <!--         <RowDefinition /> -->
+    <!--         <RowDefinition Height="Auto" /> -->
+    <!--     </Grid.RowDefinitions> -->
+    <!--     <Grid.ColumnDefinitions> -->
+    <!--         <ColumnDefinition /> -->
+    <!--         <ColumnDefinition /> -->
+    <!--     </Grid.ColumnDefinitions> -->
+    <!--     <Image x:Name="RotateImage" Stretch="Uniform" Source="/Resources/Icons/chat.png"> -->
+    <!--         <Image.RenderTransform> -->
+    <!--             <RotateTransform Angle="0" /> -->
+    <!--         </Image.RenderTransform> -->
+    <!--     </Image> -->
+    <!--     <Image x:Name="OpacityImage" Grid.Column="1" Stretch="Uniform" Source="/Resources/Icons/send.png" /> -->
+    <!--     <Button Grid.Row="1" Grid.ColumnSpan="2" Content="Start"> -->
+    <!--         <Button.Triggers> -->
+    <!--             <EventTrigger RoutedEvent="Button.Click"> -->
+    <!--                 <BeginStoryboard Storyboard="{StaticResource Storyboard}" /> -->
+    <!--             </EventTrigger> -->
+    <!--         </Button.Triggers> -->
+    <!--     </Button> -->
+    <!-- </Grid> -->
 </Window>

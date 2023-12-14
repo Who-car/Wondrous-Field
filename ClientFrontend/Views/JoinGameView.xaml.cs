@@ -22,7 +22,7 @@ public partial class JoinGameView : Page
         
         _mainFrame = mainFrame;
         _client = new AntpClient();
-        SecretCode = new ObservableCollection<CellContent> { new(), new(), new(), new(), new() };
+        SecretCode = new ObservableCollection<CellContent>(Enumerable.Range(0, 5).Select(_ => new CellContent()));
         
         _client.OnGameStart += info => _mainFrame.Navigate(new GameView(_mainFrame, _client));
         CharactersControl.ItemsSource = SecretCode;

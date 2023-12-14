@@ -32,8 +32,10 @@
                           ItemsSource="{Binding WordLetters}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <TextBox Style="{StaticResource EmptyCell}"
+                        <TextBox x:Name="TextBox" 
+                                 Style="{StaticResource EmptyCell}"
                                  IsEnabled="{Binding IsEnabled}"
+                                 Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
                                  PreviewMouseDown="TextBox_OnMouseDown"
                                  TextChanged="TextBox_OnTextInput"></TextBox>
                     </DataTemplate>

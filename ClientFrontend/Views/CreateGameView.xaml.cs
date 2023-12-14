@@ -27,7 +27,7 @@ public partial class CreateGameView : Page
 
     private async Task<char[]> GetSecretCode()
     {
-        var connection = await _client.StartNewGame();
+        var connection = await Task.Run(async () => await _client.StartNewGame());
         
         if (connection.IsSuccessfulJoin)
             return connection.SessionId!.ToUpper().ToCharArray();

@@ -68,8 +68,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         set => SetField(ref _info, value);
     }
 
-    private ObservableCollection<CellContent> WordLetters = new(
-        new ObservableCollection<CellContent>(Enumerable.Repeat(new CellContent(), WordLength)));
+    private ObservableCollection<CellContent> WordLetters;
     public ObservableCollection<Message> Messages = new();
     public GameView(Frame mainFrame, AntpClient client)
     {
@@ -78,11 +77,13 @@ public partial class GameView : Page, INotifyPropertyChanged
         
         _mainFrame = mainFrame;
         _client = client;
+        WordLetters = new ObservableCollection<CellContent>(Enumerable.Range(0, WordLength).Select(_ => new CellContent()));
 
         _client.MessageReceived += message =>
             Messages.Add(new Message { Author = message.PlayerName, Text = message.Content });
         _client.OnTurn += info => IsTurn = client.IsTurn;
         _client.GameOver += winner => _mainFrame.Navigate(new VictoryView(_mainFrame, winner));
+        
         CharactersControl.ItemsSource = WordLetters;
         MessagesControl.ItemsSource = Messages;
     }
@@ -93,7 +94,6 @@ public partial class GameView : Page, INotifyPropertyChanged
             ChatButton_Click(sender, e);
     }
     
-    // TODO: Починить все async void
     private async void ChatButton_Click(object sender, RoutedEventArgs e)
     {
         await _client.ReportMessage(ChatInput.Text);
@@ -144,7 +144,7 @@ public partial class GameView : Page, INotifyPropertyChanged
                 var word = string.Join("", WordLetters.Select(c => c.Text));
                 if (await _client.CheckWord(word))
                 {
-                    Info = "Какой вы молодец! Халифат горд!";
+                    Info = $"Какой вы молодец! Халифат горд! Ты отгадал '{word}'";
                 }
                 else
                 {
@@ -160,7 +160,6 @@ public partial class GameView : Page, INotifyPropertyChanged
                 if (Keyboard.FocusedElement is UIElement keyboardFocus)
                     keyboardFocus.MoveFocus(tRequest);
             }
-
         }
     }
 
@@ -184,6 +183,10 @@ public partial class GameView : Page, INotifyPropertyChanged
             cellContent.IsEnabled = true;
         }
         Info = "Введите слово";
+        
+        if (CharactersControl.ItemContainerGenerator.ContainerFromIndex(0) is not ContentPresenter container) return;
+        var textBox = container.ContentTemplate.FindName("TextBox", container) as TextBox;
+        textBox?.Focus();
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;

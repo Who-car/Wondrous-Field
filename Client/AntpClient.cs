@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using System.Net;
+using System.Net.Sockets;
 using System.Threading.Channels;
 using ClientServerTransfer;
 using PackageHelper;
@@ -13,6 +14,8 @@ public class AntpClient
 {
     private readonly Socket _socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
     private readonly Guid _clientId = Guid.NewGuid();
+    private readonly IPAddress _ip = new IPAddress(new byte[] { 127, 0, 0, 1 });
+    private readonly int _port = 5051;
     private string _playerName;
     private bool _gameStarted;
     public SessionInfo SessionInfo { get; set; }
@@ -30,21 +33,21 @@ public class AntpClient
     {
         try
         {
-            await _socket.ConnectAsync("localhost", 5000);
+            await _socket.ConnectAsync(_ip, _port);
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
                 PlayerName = playerName, 
                 PlayerId = _clientId
-            });
+            }).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(CreateSession)
                 .SetFullness(Full)
                 .SetQueryType(Request)
                 .SetContent(connection)
                 .Build();
-            await _socket.SendAsync(package, SocketFlags.None);
+            await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
             var buffer = new byte[MaxPackageSize];
-            var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
+            var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
             if (!IsPackageValid(buffer, bufferLength)
                 || !IsResponse(buffer)
                 || !IsFull(buffer)
@@ -52,7 +55,7 @@ public class AntpClient
                 throw new Exception("Couldn't create session. Try again later");
             var content = GetContent(buffer, bufferLength);
             _playerName = playerName;
-            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content);
+            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content).ConfigureAwait(false);
         }
         catch (Exception e)
         {
@@ -74,7 +77,7 @@ public class AntpClient
     {
         try
         {
-            await _socket.ConnectAsync("localhost", 5000);
+            await _socket.ConnectAsync(_ip, _port);
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo()
             {
                 PlayerName = playerName, 
