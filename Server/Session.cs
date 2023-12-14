@@ -161,7 +161,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message)).ConfigureAwait(false);
+                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), true).ConfigureAwait(false);
             }
         }
 

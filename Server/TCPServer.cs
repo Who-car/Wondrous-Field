@@ -144,6 +144,7 @@ namespace Server
                 await session.AddPlayer(connectionInfo.PlayerId!, player).ConfigureAwait(false);
 
                 _waitingSessions.Add(session.SessionId, session);
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
 
                 return true;
             }
