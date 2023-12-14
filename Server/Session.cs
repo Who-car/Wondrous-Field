@@ -86,7 +86,7 @@ namespace Server
                 if(p.Connected)
                 {
                     await Package.SendResponseToUser(p,
-                        await Serialiser.SerialiseToBytesAsync(content));
+                        content).ConfigureAwait(false);
                 } 
             }
         }
