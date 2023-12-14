@@ -181,7 +181,7 @@ namespace Server
 
                 if(info.IsWin)
                 {
-                    await StopGame();
+                    await StopGame().ConfigureAwait(false);
                 }
             }
             else
