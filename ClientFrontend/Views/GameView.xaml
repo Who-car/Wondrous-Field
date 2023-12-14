@@ -23,8 +23,8 @@
             </Grid.RowDefinitions>
             <TextBlock 
                 Grid.Row="0"
-                Style="{StaticResource PlainText}">
-                Лучшее создание на Земле это:
+                Style="{StaticResource PlainText}"
+                Text="{Binding Question}">
             </TextBlock>
             <ItemsControl Grid.Row="1" x:Name="CharactersControl"
                           HorizontalAlignment="Center" 

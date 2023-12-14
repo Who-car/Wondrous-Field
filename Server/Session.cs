@@ -10,7 +10,7 @@ namespace Server
     {
         public string SessionId { get; init; }
 
-        readonly Dictionary<Socket, string> _players = new(3);
+        readonly Dictionary<Socket, Guid> _players = new(3);
         int _playersCount = 0;
         readonly Semaphore sem = new(1, 1);
 
@@ -44,7 +44,7 @@ namespace Server
             }
         }
 
-        public async Task<bool> AddPlayer(string name, Socket player)
+        public async Task<bool> AddPlayer(Guid id, Socket player)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace Server
                     throw new Exception();
                 }
 
-                _players[player] = name;
+                _players[player] = id;
                 Interlocked.Increment(ref _playersCount);
 
                 if (_playersCount >= 3)
@@ -67,7 +67,7 @@ namespace Server
                         Word = this.Word,
                         IsGuessed = false,
                         IsWin = false,
-                        Players = _players.Values.ToArray()
+                        CurrentPlayerId = _players.First().Value
                     }));
                 }
                 sem.Release();

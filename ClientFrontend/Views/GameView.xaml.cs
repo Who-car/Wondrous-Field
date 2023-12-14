@@ -21,12 +21,9 @@ public partial class GameView : Page, INotifyPropertyChanged
     private bool _isWord;
     private bool _isTurn;
     private bool _answerGiven;
-    // TODO: посылать запросы на длину слова
-    private const int WordLength = 7;
     private string _info;
     private ObservableCollection<CellContent> _copy;
     private AntpClient _client;
-    // TODO: возможно можно избавиться от этих булек
     public bool HasChosen => !LetterChosen && !WordChosen && !IsTurn && !AnswerGiven;
 
     public bool LetterChosen
@@ -68,6 +65,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         set => SetField(ref _info, value);
     }
 
+    public string Question { get; set; }
     private ObservableCollection<CellContent> WordLetters;
     public ObservableCollection<Message> Messages = new();
     public GameView(Frame mainFrame, AntpClient client)
@@ -77,12 +75,14 @@ public partial class GameView : Page, INotifyPropertyChanged
         
         _mainFrame = mainFrame;
         _client = client;
-        WordLetters = new ObservableCollection<CellContent>(Enumerable.Range(0, WordLength).Select(_ => new CellContent()));
+        var letterNum = client.SessionInfo.Word?.Length ?? 5;
+        WordLetters = new ObservableCollection<CellContent>(Enumerable.Range(0, letterNum).Select(_ => new CellContent()));
+        Question = client.SessionInfo.Riddle ?? "Default Riddle";
 
         _client.MessageReceived += message =>
             Messages.Add(new Message { Author = message.PlayerName, Text = message.Content });
         _client.OnTurn += info => IsTurn = client.IsTurn;
-        _client.GameOver += winner => _mainFrame.Navigate(new VictoryView(_mainFrame, winner));
+        _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
         
         CharactersControl.ItemsSource = WordLetters;
         MessagesControl.ItemsSource = Messages;

@@ -126,7 +126,7 @@ namespace Server
             try
             {
                 Session session = new(CreateId(5));
-                await session.AddPlayer(connectionInfo.PlayerName!, player).ConfigureAwait(false);
+                await session.AddPlayer(connectionInfo.PlayerId!, player).ConfigureAwait(false);
                 _waitingSessions.Add(session.SessionId, session);
                 await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
 
@@ -148,7 +148,7 @@ namespace Server
                     if (_waitingSessions.ContainsKey(connectionInfo.SessionId))
                     {
                         await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName}));
-                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerName!, player).ConfigureAwait(false);
+                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerId!, player).ConfigureAwait(false);
                     }
                     else
                     {
@@ -162,7 +162,7 @@ namespace Server
                     {
                         if(!session.IsFull)
                         {
-                            await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerName!, player);
+                            await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerId!, player);
                             await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName }));
                             flag = true;
                             break;

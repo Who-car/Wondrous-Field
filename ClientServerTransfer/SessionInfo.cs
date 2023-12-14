@@ -10,7 +10,6 @@
         public bool IsGuessed { get; set; }
         public bool IsWin { get; set; } 
         public Guid CurrentPlayerId { get; set; }
-        public string? CurrentPlayer { get; set; }
         public string[]? Players { get; set; }
     }
 }

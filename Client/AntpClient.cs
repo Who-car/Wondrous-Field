@@ -114,15 +114,12 @@ public class AntpClient
             {
                 var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content.Body);
                 SessionInfo = sessionInfo;
-                if (_gameStarted)
-                {
-                    OnTurn.Invoke(sessionInfo);
-                }
-                else
+                if (!_gameStarted)
                 {
                     OnGameStart.Invoke(sessionInfo);
                     _gameStarted = true;
                 }
+                OnTurn.Invoke(sessionInfo);
             }
         } while (_socket.Connected);
     }
