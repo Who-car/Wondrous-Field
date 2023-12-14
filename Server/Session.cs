@@ -37,8 +37,8 @@ namespace Server
                 {
                     if (p.Connected)
                     {
-                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request);
-                        await p.DisconnectAsync(false);
+                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request).ConfigureAwait(false);
+                        await p.DisconnectAsync(false).ConfigureAwait(false);
                     }
                 }
             }
@@ -96,8 +96,7 @@ namespace Server
             {
                 if (p.Connected && !p.Equals(exceptPlayer))
                 {
-                    await Package.SendResponseToUser(p,
-                        await Serialiser.SerialiseToBytesAsync(content));
+                    await Package.SendResponseToUser(p, content);
                 }
             }
         }
@@ -122,7 +121,7 @@ namespace Server
 
                 foreach(var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
                 }
             }
             else
@@ -141,7 +140,7 @@ namespace Server
 
                 foreach (var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
                 }
             }
             else
@@ -159,7 +158,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message));
+                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message)).ConfigureAwait(false);
             }
         }
     }
