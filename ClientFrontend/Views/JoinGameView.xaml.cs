@@ -24,7 +24,7 @@ public partial class JoinGameView : Page
         _client = new AntpClient();
         SecretCode = new ObservableCollection<CellContent>(Enumerable.Range(0, 5).Select(_ => new CellContent()));
         
-        _client.OnGameStart += info => _mainFrame.Navigate(new GameView(_mainFrame, _client));
+        _client.OnGameStart += info => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new GameView(_mainFrame, _client)));
         CharactersControl.ItemsSource = SecretCode;
     }
 
@@ -40,12 +40,12 @@ public partial class JoinGameView : Page
         e.Handled = !regex.IsMatch(text);
     }
 
-    private async void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+    private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (SecretCode.All(item => !string.IsNullOrWhiteSpace(item.Text)))
         {
-            var sessionId = string.Join("", SecretCode.Select(c => c.Text));
-            var connection = await _client.JoinGame(sessionId);
+            var sessionId = string.Join("", SecretCode.Select(c => c.Text)); 
+            var connection = Task.Run(async() => await _client.JoinGame(sessionId).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
             MessageBox.Show(connection.IsSuccessfulJoin
                 ? "Вы успешно присоединились\nОжидайте подключения других игроков"
                 : "Неверный код\nПопробуйте ещё раз");

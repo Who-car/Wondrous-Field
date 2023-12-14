@@ -16,18 +16,17 @@ public partial class CreateGameView : Page
     {
         InitializeComponent();
         
-        // TODO: как работает GetAwaiter???
         _mainFrame = frame;
         _client = new AntpClient();
-        SecretCode = GetSecretCode().GetAwaiter().GetResult();
-
-        _client.OnGameStart += info => _mainFrame.Navigate(new GameView(_mainFrame, _client));
+        SecretCode = Task.Run(async () => 
+           await GetSecretCode()).ConfigureAwait(false).GetAwaiter().GetResult();
+        _client.OnGameStart += info => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new GameView(_mainFrame, _client)));
         CharactersControl.ItemsSource = SecretCode;
     }
 
     private async Task<char[]> GetSecretCode()
     {
-        var connection = await Task.Run(async () => await _client.StartNewGame().ConfigureAwait(false)).ConfigureAwait(false);
+        var connection = await _client.StartNewGame().ConfigureAwait(false);
         
         if (connection.IsSuccessfulJoin)
             return connection.SessionId!.ToUpper().ToCharArray();
