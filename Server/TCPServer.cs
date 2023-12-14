@@ -13,6 +13,22 @@ namespace Server
         readonly Dictionary<string, Session> _waitingSessions;
         readonly Dictionary<string, Session> _processingSessions;
 
+        internal async Task MoveSessionToProcessingSessions(string sessionId)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    _processingSessions[sessionId] = _waitingSessions[sessionId];
+                    _waitingSessions.Remove(sessionId);
+                });
+            }
+            catch
+            {
+
+            }
+        }
+
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -85,7 +101,6 @@ namespace Server
             while (socket.Connected)
             {
                 received = await Package.GetFullContent(socket).ConfigureAwait(false);
-                Console.WriteLine(Encoding.UTF8.GetString(received.Body!));
                 if (Package.IsNameLetter(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
@@ -109,10 +124,10 @@ namespace Server
                     {
                         await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo.Content!, socket).ConfigureAwait(false);
                     }
-                    else
+                    /*else
                     {
                         throw new Exception();
-                    }
+                    }*/
                 }
                 else if (Package.IsBye(received.Command!))
                 {
@@ -125,16 +140,16 @@ namespace Server
         {
             try
             {
-                Session session = new(CreateId(5));
+                Session session = new(CreateId(5), this);
                 await session.AddPlayer(connectionInfo.PlayerId!, player).ConfigureAwait(false);
+
                 _waitingSessions.Add(session.SessionId, session);
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
 
                 return true;
             }
             catch
             {
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { IsSuccessfulJoin = false, PlayerName = connectionInfo.PlayerName }));
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { IsSuccessfulJoin = false, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
                 return false;
             }
         }
@@ -149,10 +164,11 @@ namespace Server
                     {
                         await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName}));
                         await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerId!, player).ConfigureAwait(false);
+
                     }
                     else
                     {
-                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerName = connectionInfo.PlayerName }));
+                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
                     }
                 }
                 else if(connectionInfo.IsRandomJoin)
@@ -170,12 +186,12 @@ namespace Server
                     }
                     if (!flag)
                     {
-                        await CreateSession(connectionInfo, player);
+                        await CreateSession(connectionInfo, player).ConfigureAwait(false);
                     }
                 }
                 else
                 {
-                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerName = connectionInfo.PlayerName }));
+                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerName = connectionInfo.PlayerName }).ConfigureAwait(false)).ConfigureAwait(false);
                     throw new Exception("Exception during join");
                 }
 
