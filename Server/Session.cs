@@ -156,11 +156,11 @@ namespace Server
             return _players.ContainsKey(player);
         }
 
-        public async Task SendMessageToPlayers(string message)
+        public async Task SendMessageToPlayers(string message, Socket sender)
         {
             foreach (var p in _players.Keys)
             {
-                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message));
+                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message));
             }
         }
     }
