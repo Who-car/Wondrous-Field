@@ -213,5 +213,20 @@ namespace Server
         {
             await _server.MoveSessionToProcessingSessions(SessionId);
         }
+
+        public async Task RemovePlayer(Socket socket)
+        {
+            if(IsExistedPlayer(socket))
+            {
+                var player = _players[socket];
+
+                _players.Remove(socket);
+                if (_currentPlayer!.Equals(socket)) NextPlayer();
+
+                var msg = new Message { Content = $"Player {player.Name} left game", SessionId = this.SessionId };
+
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(msg)).ConfigureAwait(false);
+            }
+        }
     }
 }

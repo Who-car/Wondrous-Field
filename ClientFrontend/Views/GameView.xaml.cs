@@ -80,7 +80,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         Question = client.SessionInfo.Riddle ?? "Default Riddle";
 
         _client.MessageReceived += message =>
-            Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.PlayerName, Text = message.Content }));
+            Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.Player.Name, Text = message.Content }));
         _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() => IsTurn = client.IsTurn);
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
         

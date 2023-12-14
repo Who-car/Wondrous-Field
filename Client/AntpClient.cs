@@ -189,7 +189,7 @@ public class AntpClient
             throw new ChannelClosedException("Internet connection error");
         var request = await Serialiser.SerialiseToBytesAsync(new Message()
         {
-            PlayerName = _playerName,
+            Player = new Player { Name = _playerName},
             SessionId = SessionInfo.SessionId,
             Content = message
         });
