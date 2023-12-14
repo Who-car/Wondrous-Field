@@ -89,8 +89,8 @@ namespace Server
             }
             catch (Exception ex)
             {
-                await socket.DisconnectAsync(false).ConfigureAwait(false);
-                throw new Exception($"Error: {ex}");
+                /*await socket.DisconnectAsync(false).ConfigureAwait(false);
+                throw new Exception($"Error: {ex}");*/
             }
         }
 

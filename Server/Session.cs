@@ -53,7 +53,8 @@ namespace Server
 
             var randomItem = root[randomIndex];
             Riddle = randomItem.GetProperty("Riddle").GetString()!;
-            Word = randomItem.GetProperty("Word").GetString()!.ToCharArray();
+            Word = randomItem.GetProperty("Word").GetString()!.ToUpper().ToCharArray();
+            GuessedLetters = new char[Word.Length];
         }
 
         public async Task StopGame()
@@ -98,6 +99,7 @@ namespace Server
                         CurrentPlayer = _players.First().Value
                     }));
                     await NotifyServerAboutStartingGame();
+                    _currentPlayer = player;
                 }
                 sem.Release();
                 return true;
@@ -160,9 +162,9 @@ namespace Server
             {
                 for(var i = 0; i < Word!.Length; i++)
                 {
-                    if (Word[i].Equals(letter))
+                    if (Word[i].Equals(char.ToUpper(letter)))
                     {
-                        GuessedLetters![i] = letter;
+                        GuessedLetters![i] = char.ToUpper(letter);
                         info.IsGuessed = true;
                         info.Word = GuessedLetters;
                     }
@@ -194,7 +196,7 @@ namespace Server
 
             if (IsExistedPlayer(player))
             {
-                info.IsWin = Word!.SequenceEqual(word);
+                info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
 
                 info.CurrentPlayer = NextPlayer();
 
