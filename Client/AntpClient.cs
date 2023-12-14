@@ -61,8 +61,7 @@ public class AntpClient
         finally
         {
             // TODO: как работает getAwaiter? Может надо просто запускать бэкграунд таск
-            var listenTask = Listen().ConfigureAwait(false);
-            listenTask.GetAwaiter().GetResult();
+            Task.Run(Listen).ConfigureAwait(false);
         }
     }
 
@@ -70,10 +69,10 @@ public class AntpClient
     {
         try
         {
-            await _socket.ConnectAsync(_ip, _port);
+            await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo()
             {
-                PlayerName = playerName, 
+                PlayerName = playerName,
                 PlayerId = _clientId,
                 SessionId = sessionId
             });
@@ -83,7 +82,7 @@ public class AntpClient
                 .SetQueryType(Request)
                 .SetContent(connection)
                 .Build();
-            await _socket.SendAsync(package, SocketFlags.None);
+            await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
             var content = await GetFullContent(_socket).ConfigureAwait(false);
             _playerName = playerName;
             return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!);
@@ -98,8 +97,7 @@ public class AntpClient
         }
         finally
         {
-            var listenTask = Listen();
-            listenTask.GetAwaiter().GetResult();
+            Task.Run(Listen).ConfigureAwait(false);
         }
     }
 
@@ -107,19 +105,14 @@ public class AntpClient
     {
         do
         {
-            var buffer = new byte[MaxPackageSize];
-            var bufferLength = await _socket.ReceiveAsync(buffer, SocketFlags.None);
-            if (!IsPackageValid(buffer, bufferLength)
-                || !IsResponse(buffer))
-                continue;
-            var content = GetContent(buffer, bufferLength);
+            var content = await GetFullContent(_socket).ConfigureAwait(false);
 
-            if (IsMessage(buffer))
-                MessageReceived.Invoke(await Serialiser.DeserialiseAsync<Message>(content));
+            if (IsMessage(content.Command!))
+                MessageReceived.Invoke(await Serialiser.DeserialiseAsync<Message>(content.Body));
 
-            if (IsPost(buffer))
+            if (IsPost(content.Command!))
             {
-                var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content);
+                var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content.Body);
                 SessionInfo = sessionInfo;
                 if (_gameStarted)
                 {

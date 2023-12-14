@@ -85,8 +85,7 @@ namespace Server
             {
                 if(p.Connected)
                 {
-                    await Package.SendResponseToUser(p,
-                        content).ConfigureAwait(false);
+                    await Package.SendResponseToUser(p, content);
                 } 
             }
         }

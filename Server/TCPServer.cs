@@ -147,7 +147,7 @@ namespace Server
                     if (_waitingSessions.ContainsKey(connectionInfo.SessionId))
                     {
                         await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = true, PlayerName = connectionInfo.PlayerName}));
-                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerName!, player);
+                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerName!, player).ConfigureAwait(false);
                     }
                     else
                     {
