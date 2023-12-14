@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using System.Text;
 
 namespace PackageHelper
 {
@@ -28,7 +29,7 @@ namespace PackageHelper
 
         public static byte[] GetContent(byte[] package, int packageLength)
         {
-            return package.Take(new Range(BodyStartIndex, packageLength - 2)).ToArray();
+            return package.Take(new Range(BodyStartIndex - 1, packageLength - 1)).ToArray();
         }
 
         public static async Task<ReceivedData> GetFullContent(Socket socket)
@@ -41,7 +42,7 @@ namespace PackageHelper
             while (socket.Connected)
             {
                 packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-
+                Console.WriteLine(Encoding.UTF8.GetString(buffer));
                 if (!IsPackageValid(buffer, packageLength)) throw new Exception();
 
                 command = GetCommand(buffer);
@@ -143,39 +144,39 @@ namespace PackageHelper
                 or (byte)QueryType.Response;
         }
 
-        public static bool IsCreateSession(byte[] buffer)
+        public static bool IsCreateSession(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.CreateSession);
+            return command.SequenceEqual(Command.CreateSession);
         }
 
-        public static bool IsJoin(byte[] buffer)
+        public static bool IsJoin(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.Join);
+            return command.SequenceEqual(Command.Join);
         }
 
-        public static bool IsNameLetter(byte[] buffer)
+        public static bool IsNameLetter(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.NameTheLetter);
+            return command.SequenceEqual(Command.NameTheLetter);
         }
 
-        public static bool IsNameWord(byte[] buffer)
+        public static bool IsNameWord(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.NameTheWord);
+            return command.SequenceEqual(Command.NameTheWord);
         }
 
-        public static bool IsPost(byte[] buffer)
+        public static bool IsPost(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.Post);
+            return command.SequenceEqual(Command.Post);
         }
 
-        public static bool IsMessage(byte[] buffer)
+        public static bool IsMessage(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.SendMessage);
+            return command.SequenceEqual(Command.SendMessage);
         }
 
-        public static bool IsBye(byte[] buffer)
+        public static bool IsBye(byte[] command)
         {
-            return buffer[CommandStart..(CommandEnd + 1)].SequenceEqual(Command.Bye);
+            return command.SequenceEqual(Command.Bye);
         }
 
         public static bool IsPartial(byte[] buffer)
