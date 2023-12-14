@@ -17,7 +17,7 @@ public class AntpClient
     private readonly IPAddress _ip = new IPAddress(new byte[] { 127, 0, 0, 1 });
     private readonly int _port = 5051;
     private bool _gameStarted;
-    public SessionInfo SessionInfo { get; set; }
+    public SessionInfo SessionInfo { get; set; } 
     public bool IsTurn => _player.Id == SessionInfo.CurrentPlayer.Id;
     public delegate void MessageHandler(Message message);
     public delegate void SessionHandler(SessionInfo connectionInfo);
@@ -32,7 +32,7 @@ public class AntpClient
     {
         try
         {
-            await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
+            await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false); 
             _player.Name = playerName;
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player }).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
@@ -65,11 +65,7 @@ public class AntpClient
         {
             await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
             _player.Name = playerName;
-            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
-            {
-                PlayerInfo = _player,
-                SessionId = sessionId
-            }).ConfigureAwait(false);
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player}).ConfigureAwait(false);
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(Join)
                 .SetFullness(Full)
@@ -156,7 +152,7 @@ public class AntpClient
         {
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
-            CurrentPlayer = _player
+            CurrentPlayer = _player 
         });
         var package = new PackageBuilder(session.Length)
             .SetCommand(NameTheWord)
