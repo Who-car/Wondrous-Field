@@ -80,8 +80,8 @@ public partial class GameView : Page, INotifyPropertyChanged
         Question = client.SessionInfo.Riddle ?? "Default Riddle";
 
         _client.MessageReceived += message =>
-            Messages.Add(new Message { Author = message.PlayerName, Text = message.Content });
-        _client.OnTurn += info => IsTurn = client.IsTurn;
+            Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.PlayerName, Text = message.Content }));
+        _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() => IsTurn = client.IsTurn);
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
         
         CharactersControl.ItemsSource = WordLetters;
@@ -202,5 +202,15 @@ public partial class GameView : Page, INotifyPropertyChanged
         field = value;
         OnPropertyChanged(propertyName);
         return true;
+    }
+
+    private void ButtonBase_OnClick(object sender, RoutedEventArgs e)
+    {
+        Application.Current.Dispatcher.Invoke(async () =>
+        {
+            RotateImage.Visibility = Visibility.Visible;
+            await Task.Delay(10 * 1000);
+            RotateImage.Visibility = Visibility.Collapsed;
+        });
     }
 }
