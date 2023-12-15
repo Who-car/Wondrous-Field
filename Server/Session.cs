@@ -96,10 +96,10 @@ namespace Server
                         Word = this.GuessedLetters,
                         IsGuessed = false,
                         IsWin = false,
-                        CurrentPlayer = _players.Last().Value
+                        CurrentPlayer = _players.First().Value
                     }));
                     await NotifyServerAboutStartingGame();
-                    _currentPlayer = player;
+                    _currentPlayer = _players.First().Key;
                 }
                 sem.Release();
                 return true;
@@ -179,10 +179,10 @@ namespace Server
                     await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
                 }
 
-                if(info.IsWin)
+                /*if(info.IsWin)
                 {
                     await StopGame().ConfigureAwait(false);
-                }
+                }*/
             }
             else
             {
@@ -205,10 +205,10 @@ namespace Server
                     await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
                 }
 
-                if (info.IsWin)
+                /*if (info.IsWin)
                 {
                     await StopGame();
-                }
+                }*/
             }
             else
             {
