@@ -59,21 +59,6 @@ namespace Server
             GuessedLetters = new char[Word.Length];
         }
 
-        public async Task StopGame()
-        {
-            if (IsInProcess)
-            {
-                foreach (var p in _players.Keys)
-                {
-                    if (p.Connected)
-                    {
-                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request);
-                        await p.DisconnectAsync(false);
-                    }
-                }
-            }
-        }
-
         public async Task<bool> AddPlayer(Player playerInfo, Socket player)
         {
             try
@@ -110,50 +95,6 @@ namespace Server
             {
                 return false;
             }
-        }
-
-        async Task NotifyPlayers(byte[] content)
-        {
-            foreach (var p in _players.Keys)
-            {
-                if(p.Connected)
-                {
-                    await Package.SendResponseToUser(p, content);
-                } 
-            }
-        }
-
-        async Task NotifyPlayers(byte[] content, Socket exceptPlayer)
-        {
-            foreach (var p in _players.Keys)
-            {
-                if (p.Connected && !p.Equals(exceptPlayer))
-                {
-                    await Package.SendResponseToUser(p, content);
-                }
-            }
-        }
-
-        Player NextPlayer()
-        {
-            _currentPlayerIndex++;
-            if(_currentPlayerIndex >= _playersCount)
-            {
-                _currentPlayerIndex = 0;
-            }
-
-            int i = 0;
-            foreach(var p in _players)
-            {
-                if(i == _currentPlayerIndex)
-                {
-                    _currentPlayer = p.Key;
-                    return p.Value;
-                }
-                i++;
-            }
-
-            return default!;
         }
 
         public async Task NameTheLetter(Socket player, char letter)
@@ -217,7 +158,7 @@ namespace Server
                 throw new Exception();
             }
         }
-        
+
         public async Task GetScore(Socket player)
         {
             var randomIndex = new Random().Next(0, 8);
@@ -231,9 +172,41 @@ namespace Server
             }
         }
 
-        bool IsExistedPlayer(Socket player)
+        public async Task StopGame()
         {
-            return _players.ContainsKey(player);
+            if (IsInProcess)
+            {
+                foreach (var p in _players.Keys)
+                {
+                    if (p.Connected)
+                    {
+                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request);
+                        await p.DisconnectAsync(false);
+                    }
+                }
+            }
+        }
+
+        async Task NotifyPlayers(byte[] content)
+        {
+            foreach (var p in _players.Keys)
+            {
+                if(p.Connected)
+                {
+                    await Package.SendResponseToUser(p, content);
+                } 
+            }
+        }
+
+        async Task NotifyPlayers(byte[] content, Socket exceptPlayer)
+        {
+            foreach (var p in _players.Keys)
+            {
+                if (p.Connected && !p.Equals(exceptPlayer))
+                {
+                    await Package.SendResponseToUser(p, content);
+                }
+            }
         }
 
         public async Task SendMessageToPlayers(Message message, Socket sender)
@@ -247,6 +220,33 @@ namespace Server
         async Task NotifyServerAboutStartingGame()
         {
             await _server.MoveSessionToProcessingSessions(SessionId);
+        }
+
+        Player NextPlayer()
+        {
+            _currentPlayerIndex++;
+            if(_currentPlayerIndex >= _playersCount)
+            {
+                _currentPlayerIndex = 0;
+            }
+
+            int i = 0;
+            foreach(var p in _players)
+            {
+                if(i == _currentPlayerIndex)
+                {
+                    _currentPlayer = p.Key;
+                    return p.Value;
+                }
+                i++;
+            }
+
+            return default!;
+        }
+
+        bool IsExistedPlayer(Socket player)
+        {
+            return _players.ContainsKey(player);
         }
 
         public async Task RemovePlayer(Socket socket)
