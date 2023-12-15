@@ -29,10 +29,11 @@ namespace Server
 
         public bool IsFull => _playersCount >= 3;
 
-        public Session(string sessionId, TCPServer server)
+        public Session(string sessionId, TCPServer server, bool isPrivate = false)
         {
             SessionId = sessionId;
             _server = server;
+            IsPrivate = isPrivate;
         }
 
         async Task GenerateRiddle()
