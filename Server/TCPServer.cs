@@ -146,10 +146,10 @@ namespace Server
                 }
             }
 
-            if(_processingSessions.ContainsKey(sessionId))
+            /*if(_processingSessions.ContainsKey(sessionId))
             {
                 await _processingSessions[sessionId].RemovePlayer(socket).ConfigureAwait(false);
-            }
+            }*/
         }
 
         async Task<bool> CreateSession(ConnectionInfo connectionInfo, Socket player)
