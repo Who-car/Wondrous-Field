@@ -13,22 +13,6 @@ namespace Server
         readonly Dictionary<string, Session> _waitingSessions;
         readonly Dictionary<string, Session> _processingSessions;
 
-        internal async Task MoveSessionToProcessingSessions(string sessionId)
-        {
-            try
-            {
-                await Task.Run(() =>
-                {
-                    _processingSessions[sessionId] = _waitingSessions[sessionId];
-                    _waitingSessions.Remove(sessionId);
-                });
-            }
-            catch
-            {
-
-            }
-        }
-
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -46,8 +30,6 @@ namespace Server
                 do
                 {
                     var clientSocket = await _listener.AcceptAsync();
-
-                    //_clients.Add(clientSocket, null!);
 
                     _ = Task.Run(
                         async() => 
@@ -77,7 +59,7 @@ namespace Server
                 }
                 else if (Package.IsCreateSession(received.Command!))
                 {
-                    await CreateSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket);
+                    await CreateSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket, true);
                 }
                 else if (Package.IsJoin(received.Command!))
                 {
@@ -139,26 +121,38 @@ namespace Server
                 }
                 else if (Package.IsBye(received.Command!))
                 {
+                    //TODO: disconnecting
                     await socket.DisconnectAsync(false);
                 }
             }
         }
 
-        async Task<bool> CreateSession(ConnectionInfo connectionInfo, Socket player)
+        async Task<bool> CreateSession(ConnectionInfo connectionInfo, Socket player, bool isPrivate = false)
         {
             try
             {
-                Session session = new(CreateId(5), this);
+                Session session = new(CreateId(5), this, isPrivate);
                 await session.AddPlayer(connectionInfo.PlayerInfo, player);
 
                 _waitingSessions.Add(session.SessionId, session);
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo }));
+                await Package.SendResponseToUser(player,
+                    await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+                    {
+                        SessionId = session.SessionId,
+                        IsSuccessfulJoin = true,
+                        PlayerInfo = connectionInfo.PlayerInfo
+                    }));
 
                 return true;
             }
             catch
             {
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }));
+                await Package.SendResponseToUser(player,
+                    await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+                    {
+                        IsSuccessfulJoin = false,
+                        PlayerInfo = connectionInfo.PlayerInfo
+                    }));
                 
                 return false;
             }
@@ -170,14 +164,20 @@ namespace Server
             {
                 if(!connectionInfo.IsRandomJoin && connectionInfo.SessionId != null)
                 {
-                    if (_waitingSessions.ContainsKey(connectionInfo.SessionId))
+                    if (_waitingSessions.ContainsKey(connectionInfo.SessionId) && _waitingSessions[connectionInfo.SessionId].IsPrivate)
                     {
-                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo}));
-                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerInfo, player).ConfigureAwait(false);
+                        await Package.SendResponseToUser(player,
+                            await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+                            {
+                                SessionId = connectionInfo.SessionId,
+                                IsSuccessfulJoin = true,
+                                PlayerInfo = connectionInfo.PlayerInfo
+                            }));
+                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
                     }
                     else
                     {
-                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }).ConfigureAwait(false)).ConfigureAwait(false);
+                        await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }));
                     }
                 }
                 else if(connectionInfo.IsRandomJoin)
@@ -187,7 +187,13 @@ namespace Server
                     {
                         if(!session.IsFull)
                         {
-                            await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo }));
+                            await Package.SendResponseToUser(player,
+                                await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+                                {
+                                    SessionId = session.SessionId,
+                                    IsSuccessfulJoin = true,
+                                    PlayerInfo = connectionInfo.PlayerInfo
+                                }));
                             await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
                             flag = true;
                             break;
@@ -200,7 +206,13 @@ namespace Server
                 }
                 else
                 {
-                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }));
+                    await Package.SendResponseToUser(player,
+                        await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+                        {
+                            SessionId = connectionInfo.SessionId,
+                            IsSuccessfulJoin = false,
+                            PlayerInfo = connectionInfo.PlayerInfo
+                        }));
                     throw new Exception("Exception during join");
                 }
 
@@ -227,8 +239,38 @@ namespace Server
 
             return
                 _waitingSessions.ContainsKey(id.ToString()) || _processingSessions.ContainsKey(id.ToString())
-                ? CreateId(len)
-                : id.ToString();
+                    ? CreateId(len)
+                    : id.ToString();
+        }
+
+        internal async Task MoveSessionToProcessingSessions(string sessionId)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    _processingSessions[sessionId] = _waitingSessions[sessionId];
+                    _waitingSessions.Remove(sessionId);
+                });
+            }
+            catch
+            {
+            }
+        }
+
+        internal async Task DeleteSession(string sessionId)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (_waitingSessions.ContainsKey(sessionId)) _waitingSessions.Remove(sessionId);
+                    if (_processingSessions.ContainsKey(sessionId)) _processingSessions.Remove(sessionId);
+                });
+            }
+            catch
+            {
+            }
         }
     }
 }

@@ -24,15 +24,17 @@ namespace Server
         public readonly int[] Scores = new int[8] { 100, 200, 300, 400, 500, 600, 700, 800 };
 
         Socket? _currentPlayer;
+        int _currentPlayerObtainedScore = 0;
         readonly TCPServer _server;
         int _currentPlayerIndex = 0;
 
         public bool IsFull => _playersCount >= 3;
 
-        public Session(string sessionId, TCPServer server)
+        public Session(string sessionId, TCPServer server, bool isPrivate = false)
         {
             SessionId = sessionId;
             _server = server;
+            IsPrivate = isPrivate;
         }
 
         async Task GenerateRiddle()
@@ -56,21 +58,6 @@ namespace Server
             Riddle = randomItem.GetProperty("Riddle").GetString()!;
             Word = randomItem.GetProperty("Word").GetString()!.ToUpper().ToCharArray();
             GuessedLetters = new char[Word.Length];
-        }
-
-        public async Task StopGame()
-        {
-            if (IsInProcess)
-            {
-                foreach (var p in _players.Keys)
-                {
-                    if (p.Connected)
-                    {
-                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request);
-                        await p.DisconnectAsync(false);
-                    }
-                }
-            }
         }
 
         public async Task<bool> AddPlayer(Player playerInfo, Socket player)
@@ -111,14 +98,95 @@ namespace Server
             }
         }
 
+        public async Task NameTheLetter(Socket player, char letter)
+        {            
+            if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
+            {
+                var info = new SessionInfo() { SessionId = SessionId };
+
+                for (var i = 0; i < Word!.Length; i++)
+                {
+                    if (Word[i].Equals(char.ToUpper(letter)))
+                    {
+                        GuessedLetters![i] = char.ToUpper(letter);
+                        info.IsGuessed = true;
+                        info.Word = GuessedLetters;
+                    }
+                }
+
+                if(!info.IsGuessed)
+                {
+                    _players[player].Points -= _currentPlayerObtainedScore;
+                }
+
+                info.IsWin = Word.SequenceEqual(GuessedLetters!);
+                info.Word = GuessedLetters;
+                info.CurrentPlayer = NextPlayer();
+
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
+
+                if (info.IsWin)
+                {
+                    await StopGame();
+                }
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+
+        public async Task NameTheWord(Socket player, char[] word)
+        {
+            if (IsExistedPlayer(player))
+            {
+                var info = new SessionInfo { SessionId = this.SessionId };
+
+                info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
+                if (!info.IsWin) _players[player].Points -= _currentPlayerObtainedScore;
+                info.CurrentPlayer = NextPlayer();
+
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
+
+                if (info.IsWin)
+                {
+                    
+                    await StopGame();
+                }
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+
+        public async Task GetScore(Socket player)
+        {
+            var randomIndex = new Random().Next(0, 8);
+            _players[player].Points += Scores[randomIndex];
+            _currentPlayerObtainedScore = Scores[randomIndex];
+            
+            var info = new SessionInfo { CurrentPlayer = _players[player] };
+            
+            foreach (var p in _players.Keys)
+            {
+                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
+            }
+        }
+
+        public async Task StopGame()
+        {
+            if (IsInProcess)
+            {
+                await _server.DeleteSession(SessionId);
+            }
+        }
+
         async Task NotifyPlayers(byte[] content)
         {
             foreach (var p in _players.Keys)
             {
-                if(p.Connected)
-                {
-                    await Package.SendResponseToUser(p, content);
-                } 
+                await Package.SendResponseToUser(p, content);
             }
         }
 
@@ -126,11 +194,24 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if (p.Connected && !p.Equals(exceptPlayer))
+                if (!p.Equals(exceptPlayer))
                 {
                     await Package.SendResponseToUser(p, content);
                 }
             }
+        }
+
+        public async Task SendMessageToPlayers(Message message, Socket sender)
+        {
+            foreach (var p in _players.Keys)
+            {
+                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), true);
+            }
+        }
+
+        async Task NotifyServerAboutStartingGame()
+        {
+            await _server.MoveSessionToProcessingSessions(SessionId);
         }
 
         Player NextPlayer()
@@ -155,97 +236,9 @@ namespace Server
             return default!;
         }
 
-        public async Task NameTheLetter(Socket player, char letter)
-        {
-            var info = new SessionInfo() {SessionId = SessionId};
-            
-            if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
-            {
-                for(var i = 0; i < Word!.Length; i++)
-                {
-                    if (Word[i].Equals(char.ToUpper(letter)))
-                    {
-                        GuessedLetters![i] = char.ToUpper(letter);
-                        info.IsGuessed = true;
-                        info.Word = GuessedLetters;
-                    }
-                }
-
-                info.IsWin = Word.SequenceEqual(GuessedLetters!);
-                info.Word = GuessedLetters;
-                info.CurrentPlayer = NextPlayer();
-
-                foreach(var p in _players.Keys)
-                {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
-                }
-
-                /*if(info.IsWin)
-                {
-                    await StopGame().ConfigureAwait(false);
-                }*/
-            }
-            else
-            {
-                throw new Exception();
-            }
-        }
-
-        public async Task NameTheWord(Socket player, char[] word)
-        {
-            var info = new SessionInfo();
-
-            if (IsExistedPlayer(player))
-            {
-                info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
-
-                info.CurrentPlayer = NextPlayer();
-
-                foreach (var p in _players.Keys)
-                {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
-                }
-
-                /*if (info.IsWin)
-                {
-                    await StopGame();
-                }*/
-            }
-            else
-            {
-                throw new Exception();
-            }
-        }
-        
-        public async Task GetScore(Socket player)
-        {
-            var randomIndex = new Random().Next(0, 8);
-            _players[player].Points += Scores[randomIndex];
-            
-            var info = new SessionInfo() {CurrentPlayer = _players[player] };
-            
-            foreach (var p in _players.Keys)
-            {
-                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
-            }
-        }
-
         bool IsExistedPlayer(Socket player)
         {
             return _players.ContainsKey(player);
-        }
-
-        public async Task SendMessageToPlayers(Message message, Socket sender)
-        {
-            foreach (var p in _players.Keys)
-            {
-                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), true);
-            }
-        }
-
-        async Task NotifyServerAboutStartingGame()
-        {
-            await _server.MoveSessionToProcessingSessions(SessionId);
         }
 
         public async Task RemovePlayer(Socket socket)

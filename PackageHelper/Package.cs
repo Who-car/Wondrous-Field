@@ -42,7 +42,6 @@ namespace PackageHelper
             while (socket.Connected)
             {
                 packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
-                Console.WriteLine(Encoding.UTF8.GetString(buffer));
                 if (!IsPackageValid(buffer, packageLength)) throw new Exception();
 
                 command = GetCommand(buffer);
@@ -210,7 +209,6 @@ namespace PackageHelper
 
             foreach (var package in packages)
             {
-                Console.WriteLine($"Send: { Encoding.UTF8.GetString(package)}");
                 await socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
             }
         }

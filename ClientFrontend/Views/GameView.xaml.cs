@@ -111,6 +111,7 @@ public partial class GameView : Page, INotifyPropertyChanged
 
         _client.MessageReceived += message =>
             Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.Player.Name, Text = message.Content }));
+        
         _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() =>
         {
             AnswerGiven = false;
@@ -122,7 +123,6 @@ public partial class GameView : Page, INotifyPropertyChanged
             {
                 WordLetters[i].Text = info.Word![i].ToString();
             }
-
             Info = client.IsTurn 
                 ? "" 
                 : $"Ход: {client.SessionInfo.CurrentPlayer.Name}";
