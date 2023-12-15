@@ -21,6 +21,7 @@ namespace Server
         public char[]? GuessedLetters { get; set; }
         public bool IsPrivate { get; init; }
         public bool IsInProcess { get; set; }
+        public readonly int[] Scores = new int[8] { 100, 200, 300, 400, 500, 600, 700, 800 };
 
         Socket? _currentPlayer;
         readonly TCPServer _server;
@@ -65,8 +66,8 @@ namespace Server
                 {
                     if (p.Connected)
                     {
-                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request).ConfigureAwait(false);
-                        await p.DisconnectAsync(false).ConfigureAwait(false);
+                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request);
+                        await p.DisconnectAsync(false);
                     }
                 }
             }
@@ -171,12 +172,12 @@ namespace Server
                 }
 
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
-
+                info.Word = GuessedLetters;
                 info.CurrentPlayer = NextPlayer();
 
                 foreach(var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
                 }
 
                 /*if(info.IsWin)
@@ -202,7 +203,7 @@ namespace Server
 
                 foreach (var p in _players.Keys)
                 {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info)).ConfigureAwait(false);
+                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
                 }
 
                 /*if (info.IsWin)
@@ -215,6 +216,19 @@ namespace Server
                 throw new Exception();
             }
         }
+        
+        public async Task GetScore(Socket player)
+        {
+            var randomIndex = new Random().Next(0, 8);
+            _players[player].Points += Scores[randomIndex];
+            
+            var info = new SessionInfo() {CurrentPlayer = _players[player] };
+            
+            foreach (var p in _players.Keys)
+            {
+                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
+            }
+        }
 
         bool IsExistedPlayer(Socket player)
         {
@@ -225,7 +239,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), true).ConfigureAwait(false);
+                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), true);
             }
         }
 
@@ -245,7 +259,7 @@ namespace Server
 
                 var msg = new Message { Content = $"Player {player.Name} left game", SessionId = this.SessionId };
 
-                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(msg)).ConfigureAwait(false);
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(msg));
             }
         }
     }

@@ -41,7 +41,7 @@ namespace PackageHelper
 
             while (socket.Connected)
             {
-                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
+                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
                 Console.WriteLine(Encoding.UTF8.GetString(buffer));
                 if (!IsPackageValid(buffer, packageLength)) throw new Exception();
 
@@ -162,6 +162,11 @@ namespace PackageHelper
         public static bool IsNameWord(byte[] command)
         {
             return command.SequenceEqual(Command.NameTheWord);
+        }
+        
+        public static bool IsScore(byte[] command)
+        {
+            return command.SequenceEqual(Command.Score);
         }
 
         public static bool IsPost(byte[] command)

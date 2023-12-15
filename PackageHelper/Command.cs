@@ -7,6 +7,7 @@
         public static readonly byte[] CreateSession = { 0x43, 0x52, 0x53, 0x4E };  //[CRSN]
         public static readonly byte[] NameTheLetter = { 0x53, 0x41, 0x59, 0x4C };  //[SAYL]
         public static readonly byte[] NameTheWord = { 0x53, 0x41, 0x59, 0x57 };    //[SAYW]
+        public static readonly byte[] Score = { 0x53, 0x43, 0x4F, 0x52 };          //[SCOR]
         public static readonly byte[] SendMessage = { 0x4D, 0x53, 0x47, 0x20 };    //[MSG ]
         public static readonly byte[] Post = { 0x50, 0x4F, 0x53, 0x54 };           //[POST]
 
@@ -18,6 +19,7 @@
                 || command.SequenceEqual(CreateSession)
                 || command.SequenceEqual(NameTheLetter)
                 || command.SequenceEqual(NameTheWord)
+                || command.SequenceEqual(Score)
                 || command.SequenceEqual(SendMessage)
                 || command.SequenceEqual(Post);
         }
