@@ -21,7 +21,7 @@ namespace Server
         public char[]? GuessedLetters { get; set; }
         public bool IsPrivate { get; init; }
         public bool IsInProcess { get; set; }
-        public readonly int[] Scores = new int[8] { 100, 200, 300, 400, 500, 600, 700, 800 };
+        public readonly int[] Scores = new int[8] { 500, 100, 300, 600, -100, 200, 400, -200 };
 
         Socket? _currentPlayer;
         int _currentPlayerObtainedScore = 0;
@@ -102,7 +102,7 @@ namespace Server
         {            
             if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
             {
-                var info = new SessionInfo() { SessionId = SessionId };
+                var info = new SessionInfo() { SessionId = this.SessionId };
 
                 for (var i = 0; i < Word!.Length; i++)
                 {
@@ -186,6 +186,11 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
+                if (!p.Connected)
+                {
+                    await RemovePlayer(p);
+                    continue;
+                }
                 await Package.SendResponseToUser(p, content);
             }
         }
@@ -194,6 +199,11 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
+                if (!p.Connected)
+                {
+                    await RemovePlayer(p);
+                    continue;
+                }    
                 if (!p.Equals(exceptPlayer))
                 {
                     await Package.SendResponseToUser(p, content);
@@ -241,19 +251,34 @@ namespace Server
             return _players.ContainsKey(player);
         }
 
-        public async Task RemovePlayer(Socket socket)
+        public async Task RemovePlayer(Socket player)
         {
-            if(IsExistedPlayer(socket))
+            //TODO:removing
+            if(IsExistedPlayer(player))
             {
-                var player = _players[socket];
+                _players.Remove(player);
+                var ind = GetPlayerIndex(player);
+                if(true)
+                {
 
-                _players.Remove(socket);
-                if (_currentPlayer!.Equals(socket)) NextPlayer();
+                }    
 
-                var msg = new Message { Content = $"Player {player.Name} left game", SessionId = this.SessionId };
+                var info = new SessionInfo { SessionId = this.SessionId, CurrentPlayer = _players[_currentPlayer!] };
 
-                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(msg));
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
             }
+        }
+
+        int GetPlayerIndex(Socket player)
+        {
+            var i = 0;
+            foreach(var p in _players)
+            {
+                if (player.Equals(p)) return i;
+                i++;
+            }
+
+            return i;
         }
     }
 }
