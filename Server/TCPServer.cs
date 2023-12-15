@@ -118,6 +118,15 @@ namespace Server
                         await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!).ConfigureAwait(false);
                     }
                 }
+                else if (Package.IsScore(received.Command!))
+                {
+                    var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
+                    sessionId = sessionInfo.SessionId;
+                    if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
+                    {
+                        await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!).ConfigureAwait(false);
+                    }
+                }
                 else if (Package.IsMessage(received.Command!))
                 {
                     var messageInfo = await Serialiser.DeserialiseAsync<Message>(received.Body!);

@@ -163,6 +163,11 @@ namespace PackageHelper
         {
             return command.SequenceEqual(Command.NameTheWord);
         }
+        
+        public static bool IsScore(byte[] command)
+        {
+            return command.SequenceEqual(Command.Score);
+        }
 
         public static bool IsPost(byte[] command)
         {

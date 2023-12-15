@@ -171,7 +171,7 @@ namespace Server
                 }
 
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
-
+                info.Word = GuessedLetters;
                 info.CurrentPlayer = NextPlayer();
 
                 foreach(var p in _players.Keys)

@@ -149,19 +149,6 @@ public partial class GameView : Page, INotifyPropertyChanged
         {
             var letter = (sender as TextBox)!.Text.ToCharArray()[0];
             Task.Run(async() => await _client.ReportLetter(letter).ConfigureAwait(false)).ConfigureAwait(false);
-            // if (response.IsGuessed)
-            // {
-            //     Info = "Вы угадали! Партия довольна тобой, держи риску миса и кошко-жена";
-            //     for (int i = 0; i < WordLetters.Count; i++)
-            //     {
-            //         WordLetters[i].Text = response.Word![i].ToString();
-            //     }
-            // }
-            // else
-            // {
-            //     (sender as TextBox)!.Text = "";
-            //     Info = "Не угадали! Ход переходит к следующему игроку";
-            // }
         
             (sender as TextBox)!.IsEnabled = false;
             Keyboard.ClearFocus();
@@ -174,15 +161,6 @@ public partial class GameView : Page, INotifyPropertyChanged
             {
                 var word = string.Join("", WordLetters.Select(c => c.Text));
                 Task.Run(async () => await _client.ReportWord(word)).ConfigureAwait(false);
-                // if (check)
-                // {
-                //     Info = $"Какой вы молодец! Халифат горд! Ты отгадал '{word}'";
-                // }
-                // else
-                // {
-                //     Info = "Не получилось(";
-                //     WordLetters = new ObservableCollection<CellContent>(_copy);
-                // }
             }
             else
             {
