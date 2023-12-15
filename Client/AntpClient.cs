@@ -156,7 +156,7 @@ public class AntpClient
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
-        var request = await Serialiser.SerialiseToBytesAsync(new Message()
+        var request = await Serialiser.SerialiseToBytesAsync(new Message
         { 
             Player = _player,
             SessionId = SessionInfo.SessionId,

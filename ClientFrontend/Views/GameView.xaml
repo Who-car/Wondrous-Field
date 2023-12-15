@@ -36,7 +36,7 @@
                         <TextBox x:Name="TextBox" 
                                  Style="{StaticResource EmptyCell}"
                                  IsEnabled="{Binding IsEnabled}"
-                                 Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                 Text="{Binding Text}"
                                  PreviewMouseDown="TextBox_OnMouseDown"
                                  TextChanged="TextBox_OnTextInput"></TextBox>
                     </DataTemplate>

@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Client;
 using ClientFrontend.UIElementHelpers;
 
@@ -143,24 +144,31 @@ public partial class GameView : Page, INotifyPropertyChanged
         Info = "Впишите букву";
     }
     
-    private void TextBox_OnTextInput(object sender, RoutedEventArgs e)
+    private async void TextBox_OnTextInput(object sender, RoutedEventArgs e)
     {
-        if (LetterChosen)
+        var text = (sender as TextBox)!.Text;
+        if (string.IsNullOrEmpty(text))
+            return;
+        if (LetterChosen && !AnswerGiven)
         {
-            var letter = (sender as TextBox)!.Text.ToCharArray()[0];
-            Task.Run(async() => await _client.ReportLetter(letter)).ConfigureAwait(false);
+            var letter = text.ToCharArray()[0];
+            AnswerGiven = true;
+            // Task.Run(async() => await _client.ReportLetter(letter));
+            await _client.ReportLetter(letter);
+            // Application.Current.Dispatcher.Invoke(async () => await _client.ReportLetter(letter));
         
+            (sender as TextBox)!.Text = "";
             (sender as TextBox)!.IsEnabled = false;
             Keyboard.ClearFocus();
-            AnswerGiven = true;
         }
 
-        if (WordChosen)
+        if (WordChosen && !AnswerGiven)
         {
             if (WordLetters.All(item => !string.IsNullOrWhiteSpace(item.Text)))
             {
                 var word = string.Join("", WordLetters.Select(c => c.Text));
                 Task.Run(async () => await _client.ReportWord(word)).ConfigureAwait(false);
+                AnswerGiven = true;
             }
             else
             {
