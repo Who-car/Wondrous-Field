@@ -158,7 +158,7 @@ namespace Server
 
         public async Task NameTheLetter(Socket player, char letter)
         {
-            var info = new SessionInfo();
+            var info = new SessionInfo() {SessionId = SessionId};
             
             if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
             {
