@@ -15,13 +15,13 @@ public partial class JoinGameView : Page
     private readonly Frame _mainFrame;
     private readonly ObservableCollection<CellContent> SecretCode;
     private readonly AntpClient _client;
-    public JoinGameView(Frame mainFrame)
+    public JoinGameView(Frame mainFrame, AntpClient client)
     {
         InitializeComponent();
         DataContext = this;
         
         _mainFrame = mainFrame;
-        _client = new AntpClient();
+        _client = client;
         SecretCode = new ObservableCollection<CellContent>(Enumerable.Range(0, 5).Select(_ => new CellContent()));
         
         _client.OnGameStart += info => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new GameView(_mainFrame, _client)));
@@ -46,6 +46,7 @@ public partial class JoinGameView : Page
         {
             var sessionId = string.Join("", SecretCode.Select(c => c.Text)); 
             var connection = Task.Run(async() => await _client.JoinGame(sessionId).ConfigureAwait(false)).ConfigureAwait(false).GetAwaiter().GetResult();
+            // TODO: MessageBox не показывать если уже начинаем играть
             MessageBox.Show(connection.IsSuccessfulJoin
                 ? "Вы успешно присоединились\nОжидайте подключения других игроков"
                 : "Неверный код\nПопробуйте ещё раз");

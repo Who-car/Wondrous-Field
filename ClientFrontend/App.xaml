@@ -160,6 +160,25 @@
                     </Setter.Value>
                 </Setter>
         </Style>
+        <Style x:Key="NameField" TargetType="TextBox">
+            <Setter Property="BorderBrush" Value="#D9D9D9"/>
+            <Setter Property="BorderThickness" Value="0,0,0,3"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0 30 0 0"></Setter>
+            <Setter Property="FontFamily" Value="{StaticResource Jura}"></Setter>
+            <Setter Property="FontSize" Value="32"></Setter>
+            <Setter Property="Foreground" Value="#D9D9D9"></Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#BFBFBF"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="#BFBFBF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="ChatButton" TargetType="Button">
             <Setter Property="Margin" Value="10 10 0 0 "></Setter>
             <Setter Property="Width" Value="50"></Setter>

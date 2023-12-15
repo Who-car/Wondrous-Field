@@ -1,35 +1,49 @@
 ﻿<Page x:Class="ClientFrontend.Views.WelcomeView"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:ClientFrontend"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="830" Width="1280">
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:ClientFrontend.Views"
+      mc:Ignorable="d"
+      Title="EnterNameView" Height="830" Width="1280"
+      Loaded="WelcomeView_OnLoaded">
     <Grid
-        VerticalAlignment="Center"
-        HorizontalAlignment="Center">
+        HorizontalAlignment="Center"
+        VerticalAlignment="Center">
         <Grid.RowDefinitions>
-            <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBlock 
-            Grid.Row="0" 
-            Style="{StaticResource Header}">
-            ЧУДЕСНОЕ ПОЛЕ
+            Grid.Row="0"
+            Style="{StaticResource PlainText}"
+            FontSize="32"
+            MaxWidth="850"
+            TextAlignment="Justify">
+            Вас приветствует игра "Чудесное Поле" (не путать с "Поле Чудес"!). 
+            Здесь вам не нужно крутить барабан, чтобы вращалась голова от вопросов. 
+            Приготовьтесь угадывать слова быстрее, чем ваш оппонент успеет сказать: 'Я знаю ответ!' 
         </TextBlock>
+        <TextBlock 
+            Grid.Row="1"
+            Style="{StaticResource PlainText}"
+            FontSize="32"
+            TextAlignment="Justify"
+            MaxWidth="850">
+            Давайте познакомимся. Как вас зовут?
+        </TextBlock>
+        <TextBox
+            Grid.Row="2"
+            x:Name="NameInput"
+            Style="{StaticResource NameField}"
+            KeyUp="ChatInput_OnKeyUp"></TextBox>
         <Button 
-            Grid.Row="1" 
+            Grid.Row="3" 
             Style="{DynamicResource RoundButton}"
-            Click="StartGame">
-            начать новую игру
-        </Button>
-        <Button 
-            Grid.Row="2" 
-            Style="{DynamicResource RoundButton}"
-            Click="JoinGame">
-            присоединиться к игре
+            Click="ButtonBase_OnClick">
+            играть
         </Button>
     </Grid>
 </Page>
