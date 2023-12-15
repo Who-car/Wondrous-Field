@@ -101,7 +101,7 @@ namespace Server
                 ReceivedData received;
                 try
                 {
-                    received = await Package.GetFullContent(socket).ConfigureAwait(false);
+                    received = await Package.GetFullContent(socket);
                 }
                 catch
                 {
