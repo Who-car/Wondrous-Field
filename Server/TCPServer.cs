@@ -125,7 +125,7 @@ namespace Server
                 }
                 else if (Package.IsBye(received.Command!))
                 {
-                    //TODO: disconnecting
+                    await DeletePlayerFromSession(socket);
                     await socket.DisconnectAsync(false);
                 }
             }
