@@ -106,6 +106,7 @@ public class AntpClient
             if (IsMessage(content.Command!))
                 MessageReceived.Invoke(await Serialiser.DeserialiseAsync<Message>(content.Body));
 
+            // TODO: новые события
             if (IsPost(content.Command!))
             {
                 var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content.Body);
@@ -120,7 +121,7 @@ public class AntpClient
         } while (_socket.Connected);
     }
 
-    public async Task<SessionInfo> CheckLetter(char letter)
+    public async Task ReportLetter(char letter)
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
@@ -129,18 +130,18 @@ public class AntpClient
             Letter = letter,
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player
-        });
+        }).ConfigureAwait(false);
         var packages = GetPackages(session, NameTheLetter, Request);
         foreach (var package in packages)
             await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
-        var response = await GetFullContent(_socket).ConfigureAwait(false);
-        var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
-        if (content.IsWin)
-            GameOver.Invoke(_player.Name);
-        return content;
+        // var response = await GetFullContent(_socket).ConfigureAwait(false);
+        // var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
+        // if (content.IsWin)
+        //     GameOver.Invoke(_player.Name);
+        // return content;
     }
     
-    public async Task<bool> CheckWord(string word)
+    public async Task ReportWord(string word)
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
@@ -153,11 +154,11 @@ public class AntpClient
         var packages = GetPackages(session, NameTheWord, Request);
         foreach (var package in packages)
             await _socket.SendAsync(package, SocketFlags.None);
-        var response = await GetFullContent(_socket).ConfigureAwait(false);
-        var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
-        if (content.IsWin)
-            GameOver.Invoke(_player.Name);
-        return content.IsGuessed;
+        // var response = await GetFullContent(_socket).ConfigureAwait(false);
+        // var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
+        // if (content.IsWin)
+        //     GameOver.Invoke(_player.Name);
+        // return content.IsGuessed;
     }
     
     public async Task ReportMessage(string message)

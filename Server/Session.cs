@@ -93,7 +93,7 @@ namespace Server
                     {
                         Riddle = this.Riddle,
                         SessionId = this.SessionId,
-                        Word = this.Word,
+                        Word = this.GuessedLetters,
                         IsGuessed = false,
                         IsWin = false,
                         CurrentPlayer = _players.Last().Value

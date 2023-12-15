@@ -93,11 +93,22 @@ public partial class GameView : Page, INotifyPropertyChanged
         _client = client;
         var letterNum = client.SessionInfo.Word?.Length ?? 5;
         WordLetters = new ObservableCollection<CellContent>(Enumerable.Range(0, letterNum).Select(_ => new CellContent()));
-        Question = client.Player.Id.ToString() ?? "Default Riddle";
+        Question = client.SessionInfo.Riddle ?? "Default Riddle";
 
         _client.MessageReceived += message =>
             Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.Player.Name, Text = message.Content }));
-        _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() => IsTurn = client.IsTurn);
+        _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() =>
+        {
+            IsTurn = client.IsTurn;
+            for (var i = 0; i < WordLetters.Count; i++)
+            {
+                WordLetters[i].Text = info.Word![i].ToString();
+            }
+
+            Info = client.SessionInfo.IsGuessed
+                ? "Угадал, халифат горидтся тобой, держи риску миса и кошко-жена"
+                : "Эй, не угадал, ход переходит следующему игроку";
+        });
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
         
         CharactersControl.ItemsSource = WordLetters;
@@ -132,25 +143,25 @@ public partial class GameView : Page, INotifyPropertyChanged
         Info = "Впишите букву";
     }
     
-    private async void TextBox_OnTextInput(object sender, RoutedEventArgs e)
+    private void TextBox_OnTextInput(object sender, RoutedEventArgs e)
     {
         if (LetterChosen)
         {
             var letter = (sender as TextBox)!.Text.ToCharArray()[0];
-            var response = await _client.CheckLetter(letter).ConfigureAwait(false);
-            if (response.IsGuessed)
-            {
-                Info = "Вы угадали! Партия довольна тобой, держи риску миса и кошко-жена";
-                for (int i = 0; i < WordLetters.Count; i++)
-                {
-                    WordLetters[i].Text = response.Word![i].ToString();
-                }
-            }
-            else
-            {
-                (sender as TextBox)!.Text = "";
-                Info = "Не угадали! Ход переходит к следующему игроку";
-            }
+            Task.Run(async() => await _client.ReportLetter(letter).ConfigureAwait(false)).ConfigureAwait(false);
+            // if (response.IsGuessed)
+            // {
+            //     Info = "Вы угадали! Партия довольна тобой, держи риску миса и кошко-жена";
+            //     for (int i = 0; i < WordLetters.Count; i++)
+            //     {
+            //         WordLetters[i].Text = response.Word![i].ToString();
+            //     }
+            // }
+            // else
+            // {
+            //     (sender as TextBox)!.Text = "";
+            //     Info = "Не угадали! Ход переходит к следующему игроку";
+            // }
         
             (sender as TextBox)!.IsEnabled = false;
             Keyboard.ClearFocus();
@@ -162,15 +173,16 @@ public partial class GameView : Page, INotifyPropertyChanged
             if (WordLetters.All(item => !string.IsNullOrWhiteSpace(item.Text)))
             {
                 var word = string.Join("", WordLetters.Select(c => c.Text));
-                if (await _client.CheckWord(word))
-                {
-                    Info = $"Какой вы молодец! Халифат горд! Ты отгадал '{word}'";
-                }
-                else
-                {
-                    Info = "Не получилось(";
-                    WordLetters = new ObservableCollection<CellContent>(_copy);
-                }
+                Task.Run(async () => await _client.ReportWord(word)).ConfigureAwait(false);
+                // if (check)
+                // {
+                //     Info = $"Какой вы молодец! Халифат горд! Ты отгадал '{word}'";
+                // }
+                // else
+                // {
+                //     Info = "Не получилось(";
+                //     WordLetters = new ObservableCollection<CellContent>(_copy);
+                // }
             }
             else
             {
