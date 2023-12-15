@@ -12,6 +12,7 @@ namespace Server
         readonly Socket _listener;
         readonly Dictionary<string, Session> _waitingSessions;
         readonly Dictionary<string, Session> _processingSessions;
+        readonly Dictionary<Socket, Session> _observerSessions;
 
         public TCPServer(IPAddress ipAddress, int port)
         {
@@ -19,6 +20,7 @@ namespace Server
             _listener.Bind(new IPEndPoint(ipAddress, port));
             _waitingSessions = new();
             _processingSessions = new();
+            _observerSessions = new();
         }
 
         public async Task RunServerAsync()
@@ -63,6 +65,7 @@ namespace Server
                 }
                 else if (Package.IsJoin(received.Command!))
                 {
+
                     await JoinToSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket);
                 }
 
@@ -70,6 +73,7 @@ namespace Server
             }
             catch
             {
+                await DeletePlayerFromSession(socket);
                 await socket.DisconnectAsync(false);
             }
         }
@@ -132,14 +136,15 @@ namespace Server
             try
             {
                 Session session = new(CreateId(5), this, isPrivate);
-                await session.AddPlayer(connectionInfo.PlayerInfo, player);
+                var result = await session.AddPlayer(connectionInfo.PlayerInfo, player);
+                if (result) _observerSessions[player] = session;
 
                 _waitingSessions.Add(session.SessionId, session);
                 await Package.SendResponseToUser(player,
                     await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
                     {
                         SessionId = session.SessionId,
-                        IsSuccessfulJoin = true,
+                        IsSuccessfulJoin = result,
                         PlayerInfo = connectionInfo.PlayerInfo
                     }));
 
@@ -173,7 +178,8 @@ namespace Server
                                 IsSuccessfulJoin = true,
                                 PlayerInfo = connectionInfo.PlayerInfo
                             }));
-                        await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
+                        var result = await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
+                        if (result) _observerSessions[player] = _waitingSessions[connectionInfo.SessionId];
                     }
                     else
                     {
@@ -194,7 +200,8 @@ namespace Server
                                     IsSuccessfulJoin = true,
                                     PlayerInfo = connectionInfo.PlayerInfo
                                 }));
-                            await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
+                            var result = await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
+                            if (result) _observerSessions[player] = _waitingSessions[session.SessionId];
                             flag = true;
                             break;
                         }
@@ -270,6 +277,15 @@ namespace Server
             }
             catch
             {
+            }
+        }
+
+        async Task DeletePlayerFromSession(Socket player)
+        {
+            if(_observerSessions.ContainsKey(player))
+            {
+                await _observerSessions[player].RemovePlayer(player);
+                _observerSessions.Remove(player);
             }
         }
     }
