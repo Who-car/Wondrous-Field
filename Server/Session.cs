@@ -259,12 +259,13 @@ namespace Server
             //TODO:removing
             if(IsExistedPlayer(player))
             {
-                _players.Remove(player);
-                var ind = GetPlayerIndex(player);
-                if(true)
+                if(_currentPlayer!.Equals(player))
                 {
-
-                }    
+                    NextPlayer();
+                    _currentPlayerObtainedScore = 0;
+                }
+                _players.Remove(player);
+                _currentPlayerIndex = GetPlayerIndex(_currentPlayer!);
 
                 var info = new SessionInfo { SessionId = this.SessionId, CurrentPlayer = _players[_currentPlayer!] };
 
