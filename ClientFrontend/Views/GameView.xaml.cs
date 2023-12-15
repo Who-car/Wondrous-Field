@@ -98,8 +98,13 @@ public partial class GameView : Page, INotifyPropertyChanged
 
         _client.MessageReceived += message =>
             Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.Player.Name, Text = message.Content }));
+        
         _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() =>
         {
+            AnswerGiven = false;
+            LetterChosen = false;
+            WordChosen = false;
+
             IsTurn = client.IsTurn;
             for (var i = 0; i < WordLetters.Count; i++)
             {
@@ -107,7 +112,7 @@ public partial class GameView : Page, INotifyPropertyChanged
             }
 
             Info = client.SessionInfo.IsGuessed
-                ? "Угадал, халифат горидтся тобой, держи риску миса и кошко-жена"
+                ? "Угадал, халифат гордится тобой, держи риску миса и кошко-жена"
                 : "Эй, не угадал, ход переходит следующему игроку";
         });
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));

@@ -47,8 +47,6 @@ namespace Server
                 {
                     var clientSocket = await _listener.AcceptAsync();
 
-                    //_clients.Add(clientSocket, null!);
-
                     _ = Task.Run(
                         async() => 
                             await ProcessClientAsync(clientSocket));
