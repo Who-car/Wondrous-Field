@@ -117,11 +117,15 @@ namespace Server
                 if(!info.IsGuessed)
                 {
                     _players[player].Points -= _currentPlayerObtainedScore;
+                    NextPlayer();
                 }
+                else
+                {
 
+                }
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
                 info.Word = GuessedLetters;
-                info.CurrentPlayer = NextPlayer();
+                info.CurrentPlayer = _players[_currentPlayer];
 
                 await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
 
@@ -143,8 +147,12 @@ namespace Server
                 var info = new SessionInfo { SessionId = this.SessionId };
 
                 info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
-                if (!info.IsWin) _players[player].Points -= _currentPlayerObtainedScore;
-                info.CurrentPlayer = NextPlayer();
+                if (!info.IsWin)
+                {
+                    _players[player].Points -= _currentPlayerObtainedScore;
+                    NextPlayer();
+                }
+                info.CurrentPlayer = _players[_currentPlayer!];
 
                 await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
 

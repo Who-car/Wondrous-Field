@@ -20,6 +20,7 @@ namespace Server
             _listener.Bind(new IPEndPoint(ipAddress, port));
             _waitingSessions = new();
             _processingSessions = new();
+            _observerSessions = new();
         }
 
         public async Task RunServerAsync()
