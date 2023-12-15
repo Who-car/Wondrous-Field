@@ -88,18 +88,25 @@ namespace Server
             }
             catch (Exception ex)
             {
-                /*await socket.DisconnectAsync(false).ConfigureAwait(false);
-                throw new Exception($"Error: {ex}");*/
+                await socket.DisconnectAsync(false).ConfigureAwait(false);
+                throw new Exception($"Error: {ex}");
             }
         }
 
         async Task ListenSocketInLoopAsync(Socket socket)
         {
-            ReceivedData received;
             string sessionId = "";
             while (socket.Connected)
             {
-                received = await Package.GetFullContent(socket).ConfigureAwait(false);
+                ReceivedData received;
+                try
+                {
+                    received = await Package.GetFullContent(socket).ConfigureAwait(false);
+                }
+                catch
+                {
+                    continue;
+                }
                 if (Package.IsNameLetter(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
