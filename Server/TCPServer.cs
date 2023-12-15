@@ -55,9 +55,9 @@ namespace Server
 
                 } while (true);
             }
-            catch
+            catch (Exception ex)
             {
-                //TODO: журналирование
+                Console.WriteLine(ex.Message);
             }
             finally
             {
@@ -86,16 +86,14 @@ namespace Server
 
                 await ListenSocketInLoopAsync(socket);
             }
-            catch (Exception ex)
+            catch
             {
-                await socket.DisconnectAsync(false).ConfigureAwait(false);
-                throw new Exception($"Error: {ex}");
+                await socket.DisconnectAsync(false);
             }
         }
 
         async Task ListenSocketInLoopAsync(Socket socket)
         {
-            string sessionId = "";
             while (socket.Connected)
             {
                 ReceivedData received;
@@ -110,7 +108,6 @@ namespace Server
                 if (Package.IsNameLetter(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
-                    sessionId = sessionInfo.SessionId;
                     if(_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _processingSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
@@ -119,7 +116,6 @@ namespace Server
                 else if (Package.IsNameWord(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
-                    sessionId = sessionInfo.SessionId;
                     if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
@@ -128,7 +124,6 @@ namespace Server
                 else if (Package.IsScore(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
-                    sessionId = sessionInfo.SessionId;
                     if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
                         await _processingSessions[sessionInfo.SessionId!].GetScore(socket);
@@ -137,26 +132,16 @@ namespace Server
                 else if (Package.IsMessage(received.Command!))
                 {
                     var messageInfo = await Serialiser.DeserialiseAsync<Message>(received.Body!);
-                    sessionId = messageInfo.SessionId;
                     if (_processingSessions.ContainsKey(messageInfo.SessionId!))
                     {
                         await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo, socket);
                     }
-                    /*else
-                    {
-                        throw new Exception();
-                    }*/
                 }
                 else if (Package.IsBye(received.Command!))
                 {
                     await socket.DisconnectAsync(false);
                 }
             }
-
-            /*if(_processingSessions.ContainsKey(sessionId))
-            {
-                await _processingSessions[sessionId].RemovePlayer(socket).ConfigureAwait(false);
-            }*/
         }
 
         async Task<bool> CreateSession(ConnectionInfo connectionInfo, Socket player)
@@ -164,16 +149,17 @@ namespace Server
             try
             {
                 Session session = new(CreateId(5), this);
-                await session.AddPlayer(connectionInfo.PlayerInfo, player).ConfigureAwait(false);
+                await session.AddPlayer(connectionInfo.PlayerInfo, player);
 
                 _waitingSessions.Add(session.SessionId, session);
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo }).ConfigureAwait(false)).ConfigureAwait(false);
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo }));
 
                 return true;
             }
             catch
             {
-                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }).ConfigureAwait(false)).ConfigureAwait(false);
+                await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }));
+                
                 return false;
             }
         }
@@ -188,7 +174,6 @@ namespace Server
                     {
                         await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo}));
                         await _waitingSessions[connectionInfo.SessionId].AddPlayer(connectionInfo.PlayerInfo, player).ConfigureAwait(false);
-
                     }
                     else
                     {
@@ -202,20 +187,20 @@ namespace Server
                     {
                         if(!session.IsFull)
                         {
-                            await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
                             await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = session.SessionId, IsSuccessfulJoin = true, PlayerInfo = connectionInfo.PlayerInfo }));
+                            await _waitingSessions[session.SessionId].AddPlayer(connectionInfo.PlayerInfo, player);
                             flag = true;
                             break;
                         }
                     }
                     if (!flag)
                     {
-                        await CreateSession(connectionInfo, player).ConfigureAwait(false);
+                        await CreateSession(connectionInfo, player);
                     }
                 }
                 else
                 {
-                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }).ConfigureAwait(false)).ConfigureAwait(false);
+                    await Package.SendResponseToUser(player, await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { SessionId = connectionInfo.SessionId, IsSuccessfulJoin = false, PlayerInfo = connectionInfo.PlayerInfo }));
                     throw new Exception("Exception during join");
                 }
 
@@ -240,7 +225,10 @@ namespace Server
                 id.Append(Convert.ToChar(num));
             }
 
-            return id.ToString();
+            return
+                _waitingSessions.ContainsKey(id.ToString()) || _processingSessions.ContainsKey(id.ToString())
+                ? CreateId(len)
+                : id.ToString();
         }
     }
 }
