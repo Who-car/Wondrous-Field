@@ -28,12 +28,11 @@ public class AntpClient
     public WinHandler GameOver { get; set; }
     public MessageHandler MessageReceived { get; set; }
     
-    public async Task<ConnectionInfo> StartNewGame(string playerName="Player")
+    public async Task<ConnectionInfo> StartNewGame()
     {
         try
         {
             await _socket.ConnectAsync(_ip, _port); 
-            _player.Name = playerName;
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player });
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(CreateSession)
@@ -59,12 +58,11 @@ public class AntpClient
         }
     }
 
-    public async Task<ConnectionInfo> JoinGame(string sessionId, string playerName="Player")
+    public async Task<ConnectionInfo> JoinGame(string sessionId)
     {
         try
         {
             await _socket.ConnectAsync(_ip, _port);
-            _player.Name = playerName;
             var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
             {
                 PlayerInfo = _player,

@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Page Update="Views\WelcomeView.xaml">
+      <Page Update="Views\SelectView.xaml">
         <Generator>MSBuild:Compile</Generator>
         <XamlRuntime>Wpf</XamlRuntime>
         <SubType>Designer</SubType>

@@ -22,16 +22,18 @@ public partial class GameView : Page, INotifyPropertyChanged
     private bool _isWord;
     private bool _isTurn;
     private bool _answerGiven;
+    private bool _wheel;
     private string _info;
     private double _angle;
     private ObservableCollection<CellContent> _copy;
     private AntpClient _client;
     private string _question;
-    public bool HasChosen => !LetterChosen && !WordChosen && IsTurn && !AnswerGiven;
+    private static readonly int[] scores = new int[] { 500, 100, 300, 600, -100, 200, 400, -200 };
+    public bool HasChosen => !LetterChosen && !WordChosen && IsTurn && !AnswerGiven && _wheel;
 
     public bool LetterChosen
     {
-        get => _isLetter;
+        get => _isLetter && _wheel && !_answerGiven;
         set
         {
             SetField(ref _isLetter, value);
@@ -40,7 +42,7 @@ public partial class GameView : Page, INotifyPropertyChanged
     }
     public bool WordChosen
     {
-        get => _isWord;
+        get => _isWord && _wheel && !_answerGiven;
         set
         {
             SetField(ref _isWord, value);
@@ -56,6 +58,16 @@ public partial class GameView : Page, INotifyPropertyChanged
             OnPropertyChanged(nameof(HasChosen));
         }
     }
+
+    public bool WheelSpinned
+    {
+        get => !_wheel && _isTurn;
+        set
+        {
+            SetField(ref _wheel, !value);
+            OnPropertyChanged(nameof(HasChosen));
+        }
+    }
     public bool IsTurn
     {
         get => _isTurn;
@@ -63,6 +75,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         {
             SetField(ref _isTurn, value);
             OnPropertyChanged(nameof(HasChosen));
+            OnPropertyChanged(nameof(WheelSpinned));
         }
     }
 
@@ -100,15 +113,19 @@ public partial class GameView : Page, INotifyPropertyChanged
             Application.Current.Dispatcher.Invoke(() => Messages.Add(new Message { Author = message.Player.Name, Text = message.Content }));
         _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() =>
         {
+            AnswerGiven = false;
+            LetterChosen = false;
+            WordChosen = false;
             IsTurn = client.IsTurn;
+            WheelSpinned = true;
             for (var i = 0; i < WordLetters.Count; i++)
             {
                 WordLetters[i].Text = info.Word![i].ToString();
             }
 
-            Info = client.SessionInfo.IsGuessed
-                ? "Угадал, халифат горидтся тобой, держи риску миса и кошко-жена"
-                : "Эй, не угадал, ход переходит следующему игроку";
+            Info = client.IsTurn 
+                ? "" 
+                : $"Ход: {client.SessionInfo.CurrentPlayer.Name}";
         });
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
         
@@ -141,7 +158,6 @@ public partial class GameView : Page, INotifyPropertyChanged
         } 
         
         (sender as TextBox)!.IsEnabled = true;
-        Info = "Впишите букву";
     }
     
     private async void TextBox_OnTextInput(object sender, RoutedEventArgs e)
@@ -157,27 +173,32 @@ public partial class GameView : Page, INotifyPropertyChanged
             await _client.ReportLetter(letter);
             // Application.Current.Dispatcher.Invoke(async () => await _client.ReportLetter(letter));
         
-            (sender as TextBox)!.Text = "";
-            (sender as TextBox)!.IsEnabled = false;
-            Keyboard.ClearFocus();
+            // (sender as TextBox)!.Text = "";
+            // (sender as TextBox)!.IsEnabled = false;
+            // Keyboard.ClearFocus();
+            WordInput.Text = "";
         }
 
         if (WordChosen && !AnswerGiven)
         {
-            if (WordLetters.All(item => !string.IsNullOrWhiteSpace(item.Text)))
-            {
-                var word = string.Join("", WordLetters.Select(c => c.Text));
-                Task.Run(async () => await _client.ReportWord(word)).ConfigureAwait(false);
-                AnswerGiven = true;
-            }
-            else
-            {
-                if (sender is not TextBox tb || tb.Text.Length <= 0) return;
-                var tRequest = new TraversalRequest(FocusNavigationDirection.Next);
-
-                if (Keyboard.FocusedElement is UIElement keyboardFocus)
-                    keyboardFocus.MoveFocus(tRequest);
-            }
+            // if (WordLetters.All(item => !string.IsNullOrWhiteSpace(item.Text)))
+            // {
+            //     var word = string.Join("", WordLetters.Select(c => c.Text));
+            //     Task.Run(async () => await _client.ReportWord(word)).ConfigureAwait(false);
+            //     AnswerGiven = true;
+            // }
+            // else
+            // {
+            //     if (sender is not TextBox tb || tb.Text.Length <= 0) return;
+            //     var tRequest = new TraversalRequest(FocusNavigationDirection.Next);
+            //
+            //     if (Keyboard.FocusedElement is UIElement keyboardFocus)
+            //         keyboardFocus.MoveFocus(tRequest);
+            // }
+            if (text.Length < WordLetters.Count)
+                return;
+            AnswerGiven = true;
+            await _client.ReportWord(text);
         }
     }
 
@@ -188,8 +209,6 @@ public partial class GameView : Page, INotifyPropertyChanged
         {
             cellContent.IsEnabled = true;
         }
-
-        Info = "Выберите букву";
     }
 
     private void OpenWord(object sender, RoutedEventArgs e)
@@ -200,7 +219,6 @@ public partial class GameView : Page, INotifyPropertyChanged
         {
             cellContent.IsEnabled = true;
         }
-        Info = "Введите слово";
         
         if (CharactersControl.ItemContainerGenerator.ContainerFromIndex(0) is not ContentPresenter container) return;
         var textBox = container.ContentTemplate.FindName("TextBox", container) as TextBox;
@@ -231,6 +249,7 @@ public partial class GameView : Page, INotifyPropertyChanged
             RotateImage.Visibility = Visibility.Visible;
             await Task.Delay(5*1000);
             RotateImage.Visibility = Visibility.Collapsed;
+            WheelSpinned = false;
         });
     }
 }

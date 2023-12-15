@@ -5,10 +5,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:ClientFrontend.Views"
         xmlns:system="clr-namespace:System;assembly=System.Runtime"
+        xmlns:uiElementHelpers="clr-namespace:ClientFrontend.UIElementHelpers"
         mc:Ignorable="d"
         Title="GameView" Height="830" Width="1280">
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <uiElementHelpers:ReversedBooleanToVisibilityConverter x:Key="ReversedBooleanToVisibilityConverter"/>
     </Page.Resources>
     <Grid>
         <Grid
@@ -17,7 +19,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="250"/>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -35,7 +36,7 @@
                     <DataTemplate>
                         <TextBox x:Name="TextBox" 
                                  Style="{StaticResource EmptyCell}"
-                                 IsEnabled="{Binding IsEnabled}"
+                                 IsEnabled="False"
                                  Text="{Binding Text}"
                                  PreviewMouseDown="TextBox_OnMouseDown"
                                  TextChanged="TextBox_OnTextInput"></TextBox>
@@ -62,9 +63,9 @@
                 открыть слово
             </Button>
             <Button 
-                Grid.Row="4" 
+                Grid.Row="2" 
                 Style="{DynamicResource RoundButton}"
-                Visibility="{Binding HasChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Visibility="{Binding WheelSpinned, Converter={StaticResource BooleanToVisibilityConverter}}"
                 Click="ButtonBase_OnClick">
                 барабан!
                 <Button.Triggers>
@@ -83,8 +84,37 @@
                     </EventTrigger>
                 </Button.Triggers>
             </Button>
+            <StackPanel
+                Grid.Row="3"
+                Orientation="Horizontal"
+                Margin="10 0 0 15"
+                HorizontalAlignment="Center">
+                <TextBlock 
+                    Style="{StaticResource PlainText}"
+                    Visibility="{Binding LetterChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    FontSize="32"
+                    TextAlignment="Justify"
+                    MaxWidth="550">
+                    Проверяем букву:
+                </TextBlock>
+                <TextBlock 
+                    Style="{StaticResource PlainText}"
+                    Visibility="{Binding WordChosen, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    FontSize="32"
+                    TextAlignment="Justify"
+                    MaxWidth="550">
+                    Проверяем слово:
+                </TextBlock>
+                <TextBox
+                    x:Name="WordInput"
+                    TextChanged="TextBox_OnTextInput"
+                    MinWidth="75"
+                    Style="{StaticResource NameField}"
+                    Visibility="{Binding AnswerGiven, Converter={StaticResource ReversedBooleanToVisibilityConverter}}">
+                </TextBox>
+            </StackPanel>
             <TextBlock 
-                Grid.Row="5"
+                Grid.Row="4"
                 Style="{StaticResource PlainText}"
                 Text="{Binding Info}">
             </TextBlock>
