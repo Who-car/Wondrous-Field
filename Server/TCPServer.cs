@@ -45,13 +45,13 @@ namespace Server
                 Console.WriteLine("...Сервер запущен...");
                 do
                 {
-                    var clientSocket = await _listener.AcceptAsync().ConfigureAwait(false);
+                    var clientSocket = await _listener.AcceptAsync();
 
                     //_clients.Add(clientSocket, null!);
 
                     _ = Task.Run(
                         async() => 
-                            await ProcessClientAsync(clientSocket).ConfigureAwait(false));
+                            await ProcessClientAsync(clientSocket));
 
                 } while (true);
             }
@@ -70,21 +70,21 @@ namespace Server
         {
             try
             {
-                var received = await Package.GetFullContent(socket).ConfigureAwait(false);
+                var received = await Package.GetFullContent(socket);
                 if (!Package.IsCreateSession(received.Command!) && !Package.IsJoin(received.Command!))
                 {
                     throw new Exception("Unexpected command");
                 }
                 else if (Package.IsCreateSession(received.Command!))
                 {
-                    await CreateSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!).ConfigureAwait(false), socket).ConfigureAwait(false);
+                    await CreateSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket);
                 }
                 else if (Package.IsJoin(received.Command!))
                 {
-                    await JoinToSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket).ConfigureAwait(false);
+                    await JoinToSession(await Serialiser.DeserialiseAsync<ConnectionInfo>(received.Body!), socket);
                 }
 
-                await ListenSocketInLoopAsync(socket).ConfigureAwait(false);
+                await ListenSocketInLoopAsync(socket);
             }
             catch (Exception ex)
             {
@@ -99,14 +99,14 @@ namespace Server
             string sessionId = "";
             while (socket.Connected)
             {
-                received = await Package.GetFullContent(socket).ConfigureAwait(false);
+                received = await Package.GetFullContent(socket);
                 if (Package.IsNameLetter(received.Command!))
                 {
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
                     sessionId = sessionInfo.SessionId;
                     if(_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _processingSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter).ConfigureAwait(false);
+                        await _processingSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
                     }
                 }
                 else if (Package.IsNameWord(received.Command!))
@@ -115,7 +115,7 @@ namespace Server
                     sessionId = sessionInfo.SessionId;
                     if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!).ConfigureAwait(false);
+                        await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
                     }
                 }
                 else if (Package.IsScore(received.Command!))
@@ -124,7 +124,7 @@ namespace Server
                     sessionId = sessionInfo.SessionId;
                     if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!).ConfigureAwait(false);
+                        await _processingSessions[sessionInfo.SessionId!].GetScore(socket);
                     }
                 }
                 else if (Package.IsMessage(received.Command!))
@@ -133,7 +133,7 @@ namespace Server
                     sessionId = messageInfo.SessionId;
                     if (_processingSessions.ContainsKey(messageInfo.SessionId!))
                     {
-                        await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo, socket).ConfigureAwait(false);
+                        await _processingSessions[messageInfo.SessionId!].SendMessageToPlayers(messageInfo, socket);
                     }
                     /*else
                     {
@@ -142,7 +142,7 @@ namespace Server
                 }
                 else if (Package.IsBye(received.Command!))
                 {
-                    await socket.DisconnectAsync(false).ConfigureAwait(false);
+                    await socket.DisconnectAsync(false);
                 }
             }
 

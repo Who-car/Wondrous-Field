@@ -41,7 +41,7 @@ namespace PackageHelper
 
             while (socket.Connected)
             {
-                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None).ConfigureAwait(false);
+                packageLength = await socket.ReceiveAsync(buffer, SocketFlags.None);
                 Console.WriteLine(Encoding.UTF8.GetString(buffer));
                 if (!IsPackageValid(buffer, packageLength)) throw new Exception();
 

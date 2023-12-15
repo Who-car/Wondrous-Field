@@ -28,59 +28,21 @@ public class AntpClient
     public WinHandler GameOver { get; set; }
     public MessageHandler MessageReceived { get; set; }
     
-    
     public async Task<ConnectionInfo> StartNewGame(string playerName="Player")
     {
         try
         {
-            await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false); 
+            await _socket.ConnectAsync(_ip, _port); 
             _player.Name = playerName;
-            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player }).ConfigureAwait(false);
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo { PlayerInfo = _player });
             var package = new PackageBuilder(connection.Length)
                 .SetCommand(CreateSession)
                 .SetFullness(Full)
                 .SetQueryType(Request)
                 .SetContent(connection)
                 .Build();
-            await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
-            var content = await GetFullContent(_socket).ConfigureAwait(false);
-            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!).ConfigureAwait(false);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e.ToString());
-            return new ConnectionInfo()
-            {
-                IsSuccessfulJoin = false
-            };
-        }
-        finally
-        {
-            Task.Run(Listen).ConfigureAwait(false);
-        }
-    }
-
-    public async Task<ConnectionInfo> JoinGame(string sessionId, string playerName="Player")
-    {
-        try
-        {
-            await _socket.ConnectAsync(_ip, _port).ConfigureAwait(false);
-            _player.Name = playerName;
-            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
-            {
-                PlayerInfo = _player,
-                SessionId = sessionId,
-                IsRandomJoin = false
-            }).ConfigureAwait(false);
-
-            var package = new PackageBuilder(connection.Length)
-                .SetCommand(Join)
-                .SetFullness(Full)
-                .SetQueryType(Request)
-                .SetContent(connection)
-                .Build();
-            await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
-            var content = await GetFullContent(_socket).ConfigureAwait(false);
+            await _socket.SendAsync(package, SocketFlags.None);
+            var content = await GetFullContent(_socket);
             return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!);
         }
         catch (Exception e)
@@ -93,7 +55,44 @@ public class AntpClient
         }
         finally
         {
-            Task.Run(Listen).ConfigureAwait(false);
+            Task.Run(Listen);
+        }
+    }
+
+    public async Task<ConnectionInfo> JoinGame(string sessionId, string playerName="Player")
+    {
+        try
+        {
+            await _socket.ConnectAsync(_ip, _port);
+            _player.Name = playerName;
+            var connection = await Serialiser.SerialiseToBytesAsync(new ConnectionInfo
+            {
+                PlayerInfo = _player,
+                SessionId = sessionId,
+                IsRandomJoin = false
+            });
+
+            var package = new PackageBuilder(connection.Length)
+                .SetCommand(Join)
+                .SetFullness(Full)
+                .SetQueryType(Request)
+                .SetContent(connection)
+                .Build();
+            await _socket.SendAsync(package, SocketFlags.None);
+            var content = await GetFullContent(_socket);
+            return await Serialiser.DeserialiseAsync<ConnectionInfo>(content.Body!);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+            return new ConnectionInfo()
+            {
+                IsSuccessfulJoin = false
+            };
+        }
+        finally
+        {
+            Task.Run(Listen);
         }
     }
 
@@ -101,12 +100,14 @@ public class AntpClient
     {
         do
         {
-            var content = await GetFullContent(_socket).ConfigureAwait(false);
+            var content = await GetFullContent(_socket);
 
             if (IsMessage(content.Command!))
                 MessageReceived.Invoke(await Serialiser.DeserialiseAsync<Message>(content.Body));
-
-            // TODO: новые события
+            
+            if(IsScore(content.Command!))
+                Console.WriteLine("todo: реализовать барабан");
+            
             if (IsPost(content.Command!))
             {
                 var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content.Body);
@@ -130,15 +131,10 @@ public class AntpClient
             Letter = letter,
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player
-        }).ConfigureAwait(false);
+        });
         var packages = GetPackages(session, NameTheLetter, Request);
         foreach (var package in packages)
-            await _socket.SendAsync(package, SocketFlags.None).ConfigureAwait(false);
-        // var response = await GetFullContent(_socket).ConfigureAwait(false);
-        // var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
-        // if (content.IsWin)
-        //     GameOver.Invoke(_player.Name);
-        // return content;
+            await _socket.SendAsync(package, SocketFlags.None);
     }
     
     public async Task ReportWord(string word)
@@ -150,15 +146,10 @@ public class AntpClient
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player 
-        }).ConfigureAwait(false);
+        });
         var packages = GetPackages(session, NameTheWord, Request);
         foreach (var package in packages)
             await _socket.SendAsync(package, SocketFlags.None);
-        // var response = await GetFullContent(_socket).ConfigureAwait(false);
-        // var content = await Serialiser.DeserialiseAsync<SessionInfo>(response.Body!);
-        // if (content.IsWin)
-        //     GameOver.Invoke(_player.Name);
-        // return content.IsGuessed;
     }
     
     public async Task ReportMessage(string message)

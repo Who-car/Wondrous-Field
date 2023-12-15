@@ -148,7 +148,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         if (LetterChosen)
         {
             var letter = (sender as TextBox)!.Text.ToCharArray()[0];
-            Task.Run(async() => await _client.ReportLetter(letter).ConfigureAwait(false)).ConfigureAwait(false);
+            Task.Run(async() => await _client.ReportLetter(letter)).ConfigureAwait(false);
         
             (sender as TextBox)!.IsEnabled = false;
             Keyboard.ClearFocus();
