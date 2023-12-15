@@ -98,7 +98,7 @@ namespace Server
             }
         }
 
-        public async Task NameTheLetter(Socket player, char letter)
+        public async Task NameTheLetter(Socket player, char letter, int potentialNewScore)
         {            
             if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
             {
@@ -116,12 +116,11 @@ namespace Server
 
                 if(!info.IsGuessed)
                 {
-                    _players[player].Points -= _currentPlayerObtainedScore;
                     NextPlayer();
                 }
                 else
                 {
-
+                    _players[player].Points = potentialNewScore;
                 }
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
                 info.Word = GuessedLetters;
@@ -140,14 +139,14 @@ namespace Server
             }
         }
 
-        public async Task NameTheWord(Socket player, char[] word)
+        public async Task NameTheWord(Socket player, char[] word, int potentialNewScore)
         {
             if (IsExistedPlayer(player))
             {
                 var info = new SessionInfo { SessionId = this.SessionId };
                 
                 info.IsWin = Word!.SequenceEqual(word.Select(char.ToUpper).ToArray());
-                if (!info.IsWin) _players[player].Points -= _currentPlayerObtainedScore;
+                if (info.IsWin) _players[player].Points = _currentPlayerObtainedScore;
                 info.CurrentPlayer = _players[player];
 
                 await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));

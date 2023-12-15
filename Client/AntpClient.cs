@@ -125,31 +125,35 @@ public class AntpClient
         } while (_socket.Connected);
     }
 
-    public async Task ReportLetter(char letter)
+    public async Task ReportLetter(char letter, int potentialScore)
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
+        _player.Points += potentialScore;
         var session = await Serialiser.SerialiseToBytesAsync(new SessionInfo
         {
             Letter = letter,
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player
         });
+        _player.Points -= potentialScore;
         var packages = GetPackages(session, NameTheLetter, Request);
         foreach (var package in packages)
             await _socket.SendAsync(package, SocketFlags.None);
     }
     
-    public async Task ReportWord(string word)
+    public async Task ReportWord(string word, int potentialScore)
     {
         if (!_socket.Connected)
             throw new ChannelClosedException("Internet connection error");
+        _player.Points += potentialScore;
         var session = await Serialiser.SerialiseToBytesAsync(new SessionInfo
         {
             Word = word.ToCharArray(),
             SessionId = SessionInfo.SessionId,
             CurrentPlayer = _player 
         });
+        _player.Points -= potentialScore;
         var packages = GetPackages(session, NameTheWord, Request);
         foreach (var package in packages)
             await _socket.SendAsync(package, SocketFlags.None);

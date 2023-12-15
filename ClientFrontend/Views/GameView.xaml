@@ -108,9 +108,10 @@
                 <TextBox
                     x:Name="WordInput"
                     TextChanged="TextBox_OnTextInput"
-                    MinWidth="75"
+                    MinWidth="150"
+                    TextAlignment="Center"
                     Style="{StaticResource NameField}"
-                    Visibility="{Binding AnswerGiven, Converter={StaticResource ReversedBooleanToVisibilityConverter}}">
+                    Visibility="{Binding AnswerGiven, Converter={StaticResource BooleanToVisibilityConverter}}">
                 </TextBox>
             </StackPanel>
             <TextBlock 
@@ -121,13 +122,13 @@
         </Grid>
         <Image x:Name="RotateImage" 
                Visibility="Collapsed"
-               Width="512" 
-               Height="512" 
+               Width="520" 
+               Height="520" 
                VerticalAlignment="Center" 
                HorizontalAlignment="Center" 
                Source="/Resources/Icons/wheel.png">
             <Image.RenderTransform>
-                <RotateTransform Angle="0" CenterX="256" CenterY="256"/>
+                <RotateTransform Angle="0" CenterX="260" CenterY="260"/>
             </Image.RenderTransform>
         </Image>
         <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0" Visibility="Collapsed"/>
