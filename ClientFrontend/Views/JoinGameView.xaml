@@ -46,7 +46,8 @@
                                  Style="{StaticResource EmptyCell}" 
                                  Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
                                  PreviewTextInput="TextBox_PreviewTextInput"
-                                 TextChanged="TextBox_TextChanged"/>
+                                 TextChanged="TextBox_TextChanged"
+                                 KeyUp="TextBox_OnKeyUp"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

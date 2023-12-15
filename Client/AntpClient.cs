@@ -22,7 +22,7 @@ public class AntpClient
     public bool IsTurn => _player.Id == SessionInfo.CurrentPlayer.Id;
     public delegate void MessageHandler(Message message);
     public delegate void SessionHandler(SessionInfo connectionInfo);
-    public delegate void WinHandler(string winner);
+    public delegate void WinHandler(Player winner);
     public SessionHandler OnTurn { get; set; }
     public SessionHandler OnGameStart { get; set; }
     public WinHandler GameOver { get; set; }
@@ -110,6 +110,11 @@ public class AntpClient
             {
                 var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(content.Body);
                 SessionInfo = sessionInfo;
+                if (sessionInfo.IsWin)
+                {
+                    GameOver.Invoke(sessionInfo.CurrentPlayer);
+                    continue;
+                }
                 if (!_gameStarted)
                 {
                     OnGameStart.Invoke(sessionInfo);

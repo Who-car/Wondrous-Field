@@ -70,4 +70,16 @@ public partial class JoinGameView : Page
         var textBox = container.ContentTemplate.FindName("TextBox", container) as TextBox;
         textBox?.Focus();
     }
+
+    private void TextBox_OnKeyUp(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Back)
+        {
+            if (sender is not TextBox tb || tb.Text.Length <= 0) return;
+            var tRequest = new TraversalRequest(FocusNavigationDirection.Next);
+            tb.Text = "";
+            if (Keyboard.FocusedElement is UIElement keyboardFocus)
+                keyboardFocus.MoveFocus(tRequest);
+        }
+    }
 }

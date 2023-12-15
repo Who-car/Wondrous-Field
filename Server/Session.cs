@@ -142,9 +142,9 @@ namespace Server
             {
                 var info = new SessionInfo { SessionId = this.SessionId };
 
-                info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
+                info.IsWin = Word!.SequenceEqual(word.Select(char.ToUpper).ToArray());
                 if (!info.IsWin) _players[player].Points -= _currentPlayerObtainedScore;
-                info.CurrentPlayer = NextPlayer();
+                info.CurrentPlayer = _players[_currentPlayer!];
 
                 await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
 
