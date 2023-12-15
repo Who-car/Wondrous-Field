@@ -13,22 +13,6 @@ namespace Server
         readonly Dictionary<string, Session> _waitingSessions;
         readonly Dictionary<string, Session> _processingSessions;
 
-        internal async Task MoveSessionToProcessingSessions(string sessionId)
-        {
-            try
-            {
-                await Task.Run(() =>
-                {
-                    _processingSessions[sessionId] = _waitingSessions[sessionId];
-                    _waitingSessions.Remove(sessionId);
-                });
-            }
-            catch
-            {
-
-            }
-        }
-
         public TCPServer(IPAddress ipAddress, int port)
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -137,6 +121,7 @@ namespace Server
                 }
                 else if (Package.IsBye(received.Command!))
                 {
+                    //TODO: disconnecting
                     await socket.DisconnectAsync(false);
                 }
             }
@@ -256,6 +241,36 @@ namespace Server
                 _waitingSessions.ContainsKey(id.ToString()) || _processingSessions.ContainsKey(id.ToString())
                     ? CreateId(len)
                     : id.ToString();
+        }
+
+        internal async Task MoveSessionToProcessingSessions(string sessionId)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    _processingSessions[sessionId] = _waitingSessions[sessionId];
+                    _waitingSessions.Remove(sessionId);
+                });
+            }
+            catch
+            {
+            }
+        }
+
+        internal async Task DeleteSession(string sessionId)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    if (_waitingSessions.ContainsKey(sessionId)) _waitingSessions.Remove(sessionId);
+                    if (_processingSessions.ContainsKey(sessionId)) _processingSessions.Remove(sessionId);
+                });
+            }
+            catch
+            {
+            }
         }
     }
 }

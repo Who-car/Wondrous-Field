@@ -24,6 +24,7 @@ namespace Server
         public readonly int[] Scores = new int[8] { 100, 200, 300, 400, 500, 600, 700, 800 };
 
         Socket? _currentPlayer;
+        int _currentPlayerObtainedScore = 0;
         readonly TCPServer _server;
         int _currentPlayerIndex = 0;
 
@@ -98,12 +99,12 @@ namespace Server
         }
 
         public async Task NameTheLetter(Socket player, char letter)
-        {
-            var info = new SessionInfo() {SessionId = SessionId};
-            
+        {            
             if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
             {
-                for(var i = 0; i < Word!.Length; i++)
+                var info = new SessionInfo() { SessionId = SessionId };
+
+                for (var i = 0; i < Word!.Length; i++)
                 {
                     if (Word[i].Equals(char.ToUpper(letter)))
                     {
@@ -113,19 +114,21 @@ namespace Server
                     }
                 }
 
+                if(!info.IsGuessed)
+                {
+                    _players[player].Points -= _currentPlayerObtainedScore;
+                }
+
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
                 info.Word = GuessedLetters;
                 info.CurrentPlayer = NextPlayer();
 
-                foreach(var p in _players.Keys)
-                {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
-                }
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
 
-                /*if(info.IsWin)
+                if (info.IsWin)
                 {
-                    await StopGame().ConfigureAwait(false);
-                }*/
+                    await StopGame();
+                }
             }
             else
             {
@@ -135,23 +138,21 @@ namespace Server
 
         public async Task NameTheWord(Socket player, char[] word)
         {
-            var info = new SessionInfo();
-
             if (IsExistedPlayer(player))
             {
-                info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
+                var info = new SessionInfo { SessionId = this.SessionId };
 
+                info.IsWin = Word!.SequenceEqual(word.ToString()!.ToUpper().ToArray());
+                if (!info.IsWin) _players[player].Points -= _currentPlayerObtainedScore;
                 info.CurrentPlayer = NextPlayer();
 
-                foreach (var p in _players.Keys)
-                {
-                    await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
-                }
+                await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
 
-                /*if (info.IsWin)
+                if (info.IsWin)
                 {
+                    
                     await StopGame();
-                }*/
+                }
             }
             else
             {
@@ -163,8 +164,9 @@ namespace Server
         {
             var randomIndex = new Random().Next(0, 8);
             _players[player].Points += Scores[randomIndex];
+            _currentPlayerObtainedScore = Scores[randomIndex];
             
-            var info = new SessionInfo() {CurrentPlayer = _players[player] };
+            var info = new SessionInfo { CurrentPlayer = _players[player] };
             
             foreach (var p in _players.Keys)
             {
@@ -176,14 +178,7 @@ namespace Server
         {
             if (IsInProcess)
             {
-                foreach (var p in _players.Keys)
-                {
-                    if (p.Connected)
-                    {
-                        await Package.SendContentToSocket(p, await Serialiser.SerialiseToBytesAsync(new Message { Content = "Game over" }), Command.SendMessage, QueryType.Request);
-                        await p.DisconnectAsync(false);
-                    }
-                }
+                await _server.DeleteSession(SessionId);
             }
         }
 
@@ -191,10 +186,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if(p.Connected)
-                {
-                    await Package.SendResponseToUser(p, content);
-                } 
+                await Package.SendResponseToUser(p, content);
             }
         }
 
@@ -202,7 +194,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if (p.Connected && !p.Equals(exceptPlayer))
+                if (!p.Equals(exceptPlayer))
                 {
                     await Package.SendResponseToUser(p, content);
                 }
