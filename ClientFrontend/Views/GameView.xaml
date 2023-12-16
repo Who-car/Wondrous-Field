@@ -69,12 +69,12 @@
                 Click="ButtonBase_OnClick">
                 барабан!
                 <Button.Triggers>
-                    <EventTrigger RoutedEvent="Button.Click">
+                    <EventTrigger x:Name="Trigger" RoutedEvent="Button.Click">
                         <BeginStoryboard>
-                            <Storyboard Duration="00:00:3.000">
+                            <Storyboard Duration="00:00:5.000">
                                 <DoubleAnimation Storyboard.TargetName="RotateImage"
                                                  Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
-                                                 From="0" To="{Binding TargetAngle}" Duration="00:00:03.000">
+                                                 From="0" To="{Binding TargetAngle, UpdateSourceTrigger=PropertyChanged}" Duration="00:00:03.000">
                                     <DoubleAnimation.EasingFunction>
                                         <QuadraticEase EasingMode="EaseInOut"></QuadraticEase>
                                     </DoubleAnimation.EasingFunction>
@@ -122,13 +122,13 @@
         </Grid>
         <Image x:Name="RotateImage" 
                Visibility="Collapsed"
-               Width="520" 
-               Height="520" 
+               Width="526" 
+               Height="526" 
                VerticalAlignment="Center" 
                HorizontalAlignment="Center" 
                Source="/Resources/Icons/wheel.png">
             <Image.RenderTransform>
-                <RotateTransform Angle="0" CenterX="260" CenterY="260"/>
+                <RotateTransform Angle="0" CenterX="263" CenterY="263"/>
             </Image.RenderTransform>
         </Image>
         <Rectangle x:Name="Overlay" Fill="#AA000000" Opacity="0.0" Visibility="Collapsed"/>

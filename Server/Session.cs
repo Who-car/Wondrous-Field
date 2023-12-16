@@ -98,7 +98,7 @@ namespace Server
             }
         }
 
-        public async Task NameTheLetter(Socket player, char letter, int potentialNewScore)
+        public async Task NameTheLetter(Socket player, char letter)
         {            
             if (IsExistedPlayer(player) && player.Equals(_currentPlayer))
             {
@@ -116,11 +116,8 @@ namespace Server
 
                 if(!info.IsGuessed)
                 {
+                    _players[player].Points -= _currentPlayerObtainedScore;
                     NextPlayer();
-                }
-                else
-                {
-                    _players[player].Points = potentialNewScore;
                 }
                 info.IsWin = Word.SequenceEqual(GuessedLetters!);
                 info.Word = GuessedLetters;
@@ -139,21 +136,24 @@ namespace Server
             }
         }
 
-        public async Task NameTheWord(Socket player, char[] word, int potentialNewScore)
+        public async Task NameTheWord(Socket player, char[] word)
         {
             if (IsExistedPlayer(player))
             {
                 var info = new SessionInfo { SessionId = this.SessionId };
                 
                 info.IsWin = Word!.SequenceEqual(word.Select(char.ToUpper).ToArray());
-                if (info.IsWin) _players[player].Points = _currentPlayerObtainedScore;
-                info.CurrentPlayer = _players[player];
+                if (!info.IsWin)
+                {
+                    _players[player].Points -= _currentPlayerObtainedScore;
+                    NextPlayer();
+                }
+                info.CurrentPlayer = _players[_currentPlayer];
 
                 await NotifyPlayers(await Serialiser.SerialiseToBytesAsync(info));
 
                 if (info.IsWin)
                 {
-                    
                     await StopGame();
                 }
             }
@@ -169,11 +169,15 @@ namespace Server
             _players[player].Points += Scores[randomIndex];
             _currentPlayerObtainedScore = Scores[randomIndex];
             
-            var info = new SessionInfo { CurrentPlayer = _players[player] };
+            var info = new SessionInfo
+            {
+                SessionId = SessionId,
+                CurrentPlayer = _players[player]
+            };
             
             foreach (var p in _players.Keys)
             {
-                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info));
+                await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(info), Command.Score);
             }
         }
 
@@ -218,7 +222,7 @@ namespace Server
         {
             foreach (var p in _players.Keys)
             {
-                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), true);
+                if(!p.Equals(sender)) await Package.SendResponseToUser(p, await Serialiser.SerialiseToBytesAsync(message), Command.SendMessage);
             }
         }
 

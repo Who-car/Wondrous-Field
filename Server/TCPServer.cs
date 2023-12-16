@@ -96,7 +96,7 @@ namespace Server
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
                     if(_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _processingSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter, sessionInfo.CurrentPlayer.Points);
+                        await _processingSessions[sessionInfo.SessionId!].NameTheLetter(socket, sessionInfo.Letter);
                     }
                 }
                 else if (Package.IsNameWord(received.Command!))
@@ -104,7 +104,7 @@ namespace Server
                     var sessionInfo = await Serialiser.DeserialiseAsync<SessionInfo>(received.Body!);
                     if (_processingSessions.ContainsKey(sessionInfo.SessionId!))
                     {
-                        await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!, sessionInfo.CurrentPlayer.Points);
+                        await _processingSessions[sessionInfo.SessionId!].NameTheWord(socket, sessionInfo.Word!);
                     }
                 }
                 else if (Package.IsScore(received.Command!))

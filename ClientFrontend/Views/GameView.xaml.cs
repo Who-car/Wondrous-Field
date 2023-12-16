@@ -135,6 +135,18 @@ public partial class GameView : Page, INotifyPropertyChanged
                 _client.Player.Points += PotentialScore;
         });
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
+        _client.OnGetScore += score => Application.Current.Dispatcher.Invoke(async () =>
+        {
+            PotentialScore = score;
+            var num = scores.ToList().IndexOf(score);
+            TargetAngle = 360*3 - num * 45 - 22.5;
+            // Console.WriteLine($"score: {score}, index: {num}, angle: {TargetAngle}");
+            RotateImage.Visibility = Visibility.Visible;
+            await Task.Delay(5*1000);
+            RotateImage.Visibility = Visibility.Collapsed;
+            WheelSpinned = false;
+            if (IsTurn) Info = $"{score} очков на барабане";
+        });
         
         CharactersControl.ItemsSource = WordLetters;
         MessagesControl.ItemsSource = Messages;
@@ -220,13 +232,7 @@ public partial class GameView : Page, INotifyPropertyChanged
     {
         Application.Current.Dispatcher.Invoke(async () =>
         {
-            var num = new Random().Next(0, 8);
-            PotentialScore = scores[num];
-            TargetAngle = 1080 + num * 45 - 22.5;
-            RotateImage.Visibility = Visibility.Visible;
-            await Task.Delay(5*1000);
-            RotateImage.Visibility = Visibility.Collapsed;
-            WheelSpinned = false;
+            await _client.ReportScoreRequest();
         });
     }
 }
