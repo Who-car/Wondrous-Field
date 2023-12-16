@@ -75,11 +75,20 @@ public partial class JoinGameView : Page
     {
         if (e.Key == Key.Back)
         {
-            if (sender is not TextBox tb || tb.Text.Length <= 0) return;
-            var tRequest = new TraversalRequest(FocusNavigationDirection.Next);
-            tb.Text = "";
-            if (Keyboard.FocusedElement is UIElement keyboardFocus)
-                keyboardFocus.MoveFocus(tRequest);
+            var back = new TraversalRequest(FocusNavigationDirection.Previous);
+            var forward = new TraversalRequest(FocusNavigationDirection.Next);
+            if (Keyboard.FocusedElement is TextBox next)
+            {
+                next.MoveFocus(back);
+                if (Keyboard.FocusedElement is TextBox cur)
+                {
+                    cur.Text = "";
+                }
+                else if (Keyboard.FocusedElement is UIElement ui)
+                {
+                    ui.MoveFocus(forward);
+                }
+            }
         }
     }
 }

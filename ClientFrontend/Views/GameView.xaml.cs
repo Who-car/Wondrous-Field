@@ -28,8 +28,9 @@ public partial class GameView : Page, INotifyPropertyChanged
     private ObservableCollection<CellContent> _copy;
     private AntpClient _client;
     private string _question;
+    private int _potentialScore;
     private static readonly int[] scores = new int[] { 500, 100, 300, 600, -100, 200, 400, -200 };
-    public bool HasChosen => !LetterChosen && !WordChosen && IsTurn && !AnswerGiven && _wheel;
+    public bool HasChosen => !LetterChosen && !WordChosen && IsTurn && !_answerGiven && _wheel;
 
     public bool LetterChosen
     {
@@ -38,6 +39,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         {
             SetField(ref _isLetter, value);
             OnPropertyChanged(nameof(HasChosen));
+            OnPropertyChanged(nameof(AnswerGiven));
         }
     }
     public bool WordChosen
@@ -47,18 +49,18 @@ public partial class GameView : Page, INotifyPropertyChanged
         {
             SetField(ref _isWord, value);
             OnPropertyChanged(nameof(HasChosen));
+            OnPropertyChanged(nameof(AnswerGiven));
         }
     }
     public bool AnswerGiven
     {
-        get => _answerGiven;
+        get => !_answerGiven && (WordChosen || LetterChosen);
         set
         {
-            SetField(ref _answerGiven, value);
+            SetField(ref _answerGiven, !value);
             OnPropertyChanged(nameof(HasChosen));
         }
     }
-
     public bool WheelSpinned
     {
         get => !_wheel && _isTurn;
@@ -78,13 +80,11 @@ public partial class GameView : Page, INotifyPropertyChanged
             OnPropertyChanged(nameof(WheelSpinned));
         }
     }
-
     public string Info
     {
         get => _info;
         set => SetField(ref _info, value);
     }
-
     public double TargetAngle
     {
         get => _angle;
@@ -95,8 +95,13 @@ public partial class GameView : Page, INotifyPropertyChanged
         get => _question; 
         set => SetField(ref _question, value); 
     }
+    public int PotentialScore
+    {
+        get => _potentialScore; 
+        set => SetField(ref _potentialScore, value);
+    }
     
-    private ObservableCollection<CellContent> WordLetters;
+    public ObservableCollection<CellContent> WordLetters;
     public ObservableCollection<Message> Messages = new();
     public GameView(Frame mainFrame, AntpClient client)
     {
@@ -114,11 +119,11 @@ public partial class GameView : Page, INotifyPropertyChanged
         
         _client.OnTurn += info => Application.Current.Dispatcher.Invoke(() =>
         {
-            AnswerGiven = false;
             LetterChosen = false;
             WordChosen = false;
             IsTurn = client.IsTurn;
             WheelSpinned = true;
+            AnswerGiven = true;
             for (var i = 0; i < WordLetters.Count; i++)
             {
                 WordLetters[i].Text = info.Word![i].ToString();
@@ -126,6 +131,8 @@ public partial class GameView : Page, INotifyPropertyChanged
             Info = client.IsTurn 
                 ? "" 
                 : $"Ход: {client.SessionInfo.CurrentPlayer.Name}";
+            if (info.IsGuessed)
+                _client.Player.Points += PotentialScore;
         });
         _client.GameOver += winner => Application.Current.Dispatcher.Invoke(() => _mainFrame.Navigate(new VictoryView(_mainFrame, winner)));
         
@@ -165,64 +172,33 @@ public partial class GameView : Page, INotifyPropertyChanged
         var text = (sender as TextBox)!.Text;
         if (string.IsNullOrEmpty(text))
             return;
-        if (LetterChosen && !AnswerGiven)
+        if (LetterChosen && !_answerGiven)
         {
             var letter = text.ToCharArray()[0];
-            AnswerGiven = true;
+            AnswerGiven = false;
             // Task.Run(async() => await _client.ReportLetter(letter));
-            await _client.ReportLetter(letter);
-            // Application.Current.Dispatcher.Invoke(async () => await _client.ReportLetter(letter));
-        
-            // (sender as TextBox)!.Text = "";
-            // (sender as TextBox)!.IsEnabled = false;
-            // Keyboard.ClearFocus();
+            await _client.ReportLetter(letter, PotentialScore);
             WordInput.Text = "";
         }
 
-        if (WordChosen && !AnswerGiven)
+        if (WordChosen && !_answerGiven)
         {
-            // if (WordLetters.All(item => !string.IsNullOrWhiteSpace(item.Text)))
-            // {
-            //     var word = string.Join("", WordLetters.Select(c => c.Text));
-            //     Task.Run(async () => await _client.ReportWord(word)).ConfigureAwait(false);
-            //     AnswerGiven = true;
-            // }
-            // else
-            // {
-            //     if (sender is not TextBox tb || tb.Text.Length <= 0) return;
-            //     var tRequest = new TraversalRequest(FocusNavigationDirection.Next);
-            //
-            //     if (Keyboard.FocusedElement is UIElement keyboardFocus)
-            //         keyboardFocus.MoveFocus(tRequest);
-            // }
             if (text.Length < WordLetters.Count)
                 return;
-            AnswerGiven = true;
-            await _client.ReportWord(text);
+            AnswerGiven = false;
+            await _client.ReportWord(text, PotentialScore);
+            WordInput.Text = "";
         }
     }
 
     private void OpenLetter(object sender, RoutedEventArgs e)
     {
         LetterChosen = true;
-        foreach (var cellContent in WordLetters)
-        {
-            cellContent.IsEnabled = true;
-        }
     }
 
     private void OpenWord(object sender, RoutedEventArgs e)
     {
         WordChosen = true;
-        _copy = new ObservableCollection<CellContent>(WordLetters);
-        foreach (var cellContent in WordLetters)
-        {
-            cellContent.IsEnabled = true;
-        }
-        
-        if (CharactersControl.ItemContainerGenerator.ContainerFromIndex(0) is not ContentPresenter container) return;
-        var textBox = container.ContentTemplate.FindName("TextBox", container) as TextBox;
-        textBox?.Focus();
     }
     
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -245,6 +221,7 @@ public partial class GameView : Page, INotifyPropertyChanged
         Application.Current.Dispatcher.Invoke(async () =>
         {
             var num = new Random().Next(0, 8);
+            PotentialScore = scores[num];
             TargetAngle = 1080 + num * 45 - 22.5;
             RotateImage.Visibility = Visibility.Visible;
             await Task.Delay(5*1000);
