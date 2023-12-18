@@ -39,9 +39,9 @@ The custom protocol over TCP sockets facilitates the exchange of game data, play
 - **.NET Framework**: .NET 6.0.
 - **Network**: Reliable internet connection for multiplayer functionality.
 
-## Acknowledgments
+## Extra promts
 
-- Special thanks to the Salimov jr for giving us extra work at the end of the year.
+- We feel very sorry for git commit story(( Plz, try to understand that this work was being adjusted in last 4 fours before deadline. Sincerely apologizing, we promise to be better in future 🙏
 
 We hope you enjoy playing "Wondrous Field" as much as we've enjoyed creating it.
 
